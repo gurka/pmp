@@ -5,6 +5,9 @@
 
 #include <unistd.h>
 
+#include "tcp_server.h"
+#include "tcp_connection.h"
+
 int main(int argc, char* argv[])
 {
   if (argc != 2)
@@ -44,6 +47,16 @@ int main(int argc, char* argv[])
   }
 
   printf("Using port: %d\n", port);
+
+  // Create and start TCP server
+  // It will run forever
+  // TODO: catch ^C and break
+  auto tcp_server = TcpServer::create();
+  tcp_server->start(port, [](TcpConnection&& connection)
+  {
+    printf("New connection!\n");
+    connection.close();
+  });
 
   return EXIT_SUCCESS;
 }

@@ -1,3 +1,4 @@
 *.o
+*.swp
 pmp_client
 pmp_server
