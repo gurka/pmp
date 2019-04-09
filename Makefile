@@ -1,28 +1,62 @@
-CXX=g++
-CFLAGS:=-std=c++14 -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Werror -pedantic -mtune=native -fno-strict-aliasing
-LDFLAGS:=
+# Settings
+CXX      = g++
+CXXFLAGS = -std=c++14 -MMD \
+           -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Werror \
+           -pedantic -mtune=native -fno-strict-aliasing
+LDFLAGS  =
 
 .PHONY: clean
 
-USE_BOOST:=1
+# Source code
+SOURCE_SERVER = src/pmp_server.cc
+SOURCE_CLIENT = src/pmp_client.cc
+SOURCE_EPOLL  = $(wildcard src/epoll/*.cc)
+SOURCE_BOOST  = $(wildcard src/boost/*.cc)
 
-ifeq ($(USE_BOOST),0)
-SERVER_CC_FILES=pmp_server.cc tcp_server_epoll.cc tcp_connection_epoll.cc
-SERVER_H_FILES=tcp_server.h tcp_server_epoll.h tcp_connection.h tcp_connection_epoll.h
-else
-SERVER_CC_FILES=pmp_server.cc tcp_server_boost.cc tcp_connection_boost.cc
-SERVER_H_FILES=tcp_server.h tcp_server_boost.h tcp_connection.h tcp_connection_boost.h
-CFLAGS+=-I/usr/include/boost
-LDFLAGS+=-lboost_system
-endif
+# Targets
+all:
+	@echo "Use target epoll or target boost"
 
-all: pmp_server pmp_client
+epoll: bin/epoll/pmp_server bin/epoll/pmp_client
 
-pmp_server: $(SERVER_CC_FILES) $(SERVER_H_FILES)
-	$(CXX) $(CFLAGS) $(LDFLAGS) -o $@ $(SERVER_CC_FILES)
+boost: CXXFLAGS += -I/usr/include/boost
+boost: LDFLAGS  += -lboost_system
+boost: bin/boost/pmp_server bin/boost/pmp_client
 
-pmp_client: pmp_client.cc
-	$(CXX) $(CFLAGS) $(LDFLAGS) -o $@ $^
+dir_guard = @mkdir -p $(@D)
+
+obj/src/%.o: src/%.cc
+	$(dir_guard)
+	$(CXX) $(CXXFLAGS) -c -o $@ $^
+
+obj/src/epoll/%.o: src/epoll/%.cc
+	$(dir_guard)
+	$(CXX) $(CXXFLAGS) -Isrc -c -o $@ $^
+
+obj/src/boost/%.o: src/boost/%.cc
+	$(dir_guard)
+	$(CXX) $(CXXFLAGS) -Isrc -c -o $@ $^
+
+bin/epoll/pmp_server: $(addprefix obj/, $(SOURCE_SERVER:.cc=.o)) $(addprefix obj/, $(SOURCE_EPOLL:.cc=.o))
+	$(dir_guard)
+	$(CXX) $(LDFLAGS) -o $@ $^
+
+bin/epoll/pmp_client: $(addprefix obj/, $(SOURCE_CLIENT:.cc=.o)) $(addprefix obj/, $(SOURCE_EPOLL:.cc=.o))
+	$(dir_guard)
+	$(CXX) $(LDFLAGS) -o $@ $^
+
+bin/boost/pmp_server: $(addprefix obj/, $(SOURCE_SERVER:.cc=.o)) $(addprefix obj/, $(SOURCE_BOOST:.cc=.o))
+	$(dir_guard)
+	$(CXX) $(LDFLAGS) -o $@ $^
+
+bin/boost/pmp_client: $(addprefix obj/, $(SOURCE_CLIENT:.cc=.o)) $(addprefix obj/, $(SOURCE_BOOST:.cc=.o))
+	$(dir_guard)
+	$(CXX) $(LDFLAGS) -o $@ $^
 
 clean:
-	rm -f pmp_server pmp_client
+	rm -rf bin/ obj/
+
+-include $(addprefix obj/, $(SOURCE_SERVER:.cc=.d))
+-include $(addprefix obj/, $(SOURCE_CLIENT:.cc=.d))
+-include $(addprefix obj/, $(SOURCE_EPOLL:.cc=.d))
+-include $(addprefix obj/, $(SOURCE_BOOST:.cc=.d))
