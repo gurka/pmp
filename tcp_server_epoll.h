@@ -8,7 +8,13 @@
 class TcpServerEpoll : public TcpServer
 {
  public:
-  void start(std::uint16_t port, const OnAccept& onAccept) override;
+  TcpServerEpoll(int socket_fd, const OnAccept& on_accept);
+
+  void start() override;
+
+ private:
+  int m_socket_fd;
+  OnAccept m_on_accept;
 };
 
 #endif  // TCP_SERVER_EPOLL_H_

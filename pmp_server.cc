@@ -48,15 +48,23 @@ int main(int argc, char* argv[])
 
   printf("Using port: %d\n", port);
 
-  // Create and start TCP server
-  // It will run forever
-  // TODO: catch ^C and break
-  auto tcp_server = TcpServer::create();
-  tcp_server->start(port, [](TcpConnection&& connection)
+  // Create TCP server
+  auto tcp_server = TcpServer::create(port, [](std::unique_ptr<TcpConnection>&& connection)
   {
     printf("New connection!\n");
-    connection.close();
+    connection->close();
   });
+
+  if (!tcp_server)
+  {
+    // Error message printed by TcpServer::create
+    return EXIT_FAILURE;
+  }
+
+  // Start server
+  // It will run forever
+  // TODO: catch ^C and break
+  tcp_server->start();
 
   return EXIT_SUCCESS;
 }

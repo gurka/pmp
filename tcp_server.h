@@ -10,13 +10,13 @@ class TcpConnection;
 class TcpServer
 {
  public:
-  using OnAccept = std::function<void(TcpConnection&&)>;
+  using OnAccept = std::function<void(std::unique_ptr<TcpConnection>&&)>;
 
   virtual ~TcpServer() = default;
 
-  virtual void start(std::uint16_t port, const OnAccept& onAccept) = 0;
+  virtual void start() = 0;
 
-  static std::unique_ptr<TcpServer> create();
+  static std::unique_ptr<TcpServer> create(std::uint16_t port, const OnAccept& on_accept);
 };
 
 #endif  // TCP_SERVER_H_
