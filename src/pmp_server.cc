@@ -1,12 +1,80 @@
-#include <string>
-
 #include <cstdlib>
 #include <cstdio>
+#include <cstring>
+#include <string>
+#include <unordered_map>
 
 #include <unistd.h>
 
 #include "tcp_server.h"
 #include "tcp_connection.h"
+#include "protocol.h"
+
+static std::unordered_map<int, std::unique_ptr<TcpConnection>> connections;
+static int next_connection_id = 0;
+
+static bool on_read(int connection_id, const std::uint8_t* buffer, int len)
+{
+  printf("%s: connection_id=%d len=%d\n", __func__, connection_id, len);
+
+  Protocol::Request request;
+  if (len == sizeof(request))
+  {
+    std::copy(buffer, buffer + len, reinterpret_cast<std::uint8_t*>(&request));
+
+    printf("Request: min_c_re=%f min_c_im=%f max_c_re=%f max_c_im=%f x=%d y=%d inf_n=%d\n",
+           request.min_c_re,
+           request.min_c_im,
+           request.max_c_re,
+           request.max_c_im,
+           request.x,
+           request.y,
+           request.inf_n);
+
+    // TODO: do something
+
+    Protocol::Response response;
+    strncpy(response.text, "Hello World", sizeof(response.text));
+    connections[connection_id]->write(reinterpret_cast<std::uint8_t*>(&response), sizeof(response));
+  }
+  else
+  {
+    fprintf(stderr, "Unexpected data length (received=%d expected=%d)\n", len, static_cast<int>(sizeof(request)));
+    connections[connection_id]->close();
+    connections.erase(connection_id);
+  }
+
+  // Return false to tell TcpConnection not continue reading data
+  return false;
+}
+
+static void on_write(int connection_id)
+{
+  printf("%s: connection_id=%d\n", __func__, connection_id);
+  connections[connection_id]->close();
+  connections.erase(connection_id);
+}
+
+static void on_error(int connection_id, const std::string& message)
+{
+  printf("%s: connection_id=%d message=%s\n", __func__, connection_id, message.c_str());
+  connections[connection_id]->close();
+  connections.erase(connection_id);
+}
+
+static void on_accept(std::unique_ptr<TcpConnection>&& connection)
+{
+  // Save connection
+  const auto connection_id = next_connection_id++;
+  connections[connection_id] = std::move(connection);
+  printf("%s: connection_id=%d\n", __func__, connection_id);
+
+  // and start it with callbacks to on_read, on_write and on_error
+  const auto read  = [connection_id](const std::uint8_t* buffer, int len) { return on_read(connection_id, buffer, len); };
+  const auto write = [connection_id]()                                    { on_write(connection_id);                    };
+  const auto error = [connection_id](const std::string& message)          { on_error(connection_id, message);           };
+  connections[connection_id]->start(read, write, error);
+}
 
 int main(int argc, char* argv[])
 {
@@ -49,22 +117,17 @@ int main(int argc, char* argv[])
   printf("Using port: %d\n", port);
 
   // Create TCP server
-  auto tcp_server = TcpServer::create(port, [](std::unique_ptr<TcpConnection>&& connection)
-  {
-    printf("New connection!\n");
-    connection->close();
-  });
-
+  auto tcp_server = TcpServer::create(port);
   if (!tcp_server)
   {
     // Error message printed by TcpServer::create
     return EXIT_FAILURE;
   }
 
-  // Start server
+  // Start server with a callback to on_accept
   // It will run forever
   // TODO: catch ^C and break
-  tcp_server->start();
+  tcp_server->start(on_accept);
 
   return EXIT_SUCCESS;
 }

@@ -10,12 +10,11 @@
 class TcpServerBoost : public TcpServer
 {
  public:
-  TcpServerBoost(std::uint16_t port, const OnAccept& on_accept);
+  TcpServerBoost(std::uint16_t port);
 
-  void start() override;
+  void start(const OnAccept& on_accept) override;
 
  private:
-  OnAccept m_on_accept;
   boost::asio::io_service m_io_service;
   boost::asio::ip::tcp::acceptor m_acceptor;
   boost::asio::ip::tcp::socket m_socket;

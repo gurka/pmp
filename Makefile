@@ -27,15 +27,15 @@ dir_guard = @mkdir -p $(@D)
 
 obj/src/%.o: src/%.cc
 	$(dir_guard)
-	$(CXX) $(CXXFLAGS) -c -o $@ $^
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 obj/src/epoll/%.o: src/epoll/%.cc
 	$(dir_guard)
-	$(CXX) $(CXXFLAGS) -Isrc -c -o $@ $^
+	$(CXX) $(CXXFLAGS) -Isrc -c -o $@ $<
 
 obj/src/boost/%.o: src/boost/%.cc
 	$(dir_guard)
-	$(CXX) $(CXXFLAGS) -Isrc -c -o $@ $^
+	$(CXX) $(CXXFLAGS) -Isrc -c -o $@ $<
 
 bin/epoll/pmp_server: $(addprefix obj/, $(SOURCE_SERVER:.cc=.o)) $(addprefix obj/, $(SOURCE_EPOLL:.cc=.o))
 	$(dir_guard)
