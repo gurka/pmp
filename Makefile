@@ -3,7 +3,7 @@ CXX      = g++
 CXXFLAGS = -std=c++14 -MMD \
            -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Werror \
            -pedantic -mtune=native -fno-strict-aliasing
-LDFLAGS  =
+LDFLAGS  = -lpthread
 
 .PHONY: clean
 
