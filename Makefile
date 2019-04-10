@@ -1,7 +1,7 @@
 # Settings
 CXX      = g++
 CXXFLAGS = -std=c++14 -MMD \
-           -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Werror \
+           -Wall -Wextra \
            -pedantic -mtune=native -fno-strict-aliasing
 LDFLAGS  = -lpthread
 

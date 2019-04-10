@@ -5,6 +5,7 @@
 #include "tcp_client.h"
 #include "tcp_connection.h"
 #include "protocol.h"
+#include "pgm.h"
 
 static std::unique_ptr<TcpConnection> connection;
 
@@ -14,7 +15,15 @@ static bool on_read(const std::uint8_t* buffer, int len)
   if (len == sizeof(response))
   {
     std::copy(buffer, buffer + len, reinterpret_cast<std::uint8_t*>(&response));
-    printf("Response: [%s]\n", response.text);
+
+    printf("%s: response: num_pixels=%d last_message=%d\n",
+           __func__,
+           response.num_pixels,
+           response.last_message);
+
+    // TODO: handle case where this isn't the last message
+
+    PGM::write_pgm("test.pgm", 100, 100, response.pixels);
   }
   else
   {
@@ -56,8 +65,8 @@ static void on_connected(std::unique_ptr<TcpConnection>&& connection_)
   request.min_c_im = -1.5f;
   request.max_c_re =  2.0f;
   request.max_c_im =  1.5f;
-  request.x = 10000;
-  request.y = 10000;
+  request.x = 100;
+  request.y = 100;
   request.inf_n = 1024;
   connection->write(reinterpret_cast<std::uint8_t*>(&request), sizeof(request));
 }
@@ -70,6 +79,7 @@ int main(int argc, char* argv[])
     return EXIT_FAILURE;
   }
 
+  // Split argument into address and port
   const auto arg = std::string(argv[1]);
   const auto sep = arg.find(":");
   if (sep == std::string::npos || sep == arg.size() - 1)
@@ -80,7 +90,6 @@ int main(int argc, char* argv[])
 
   const auto address = arg.substr(0, sep);
   const auto port = arg.substr(sep + 1);
-
   printf("Connecting to address %s port %s\n", address.c_str(), port.c_str());
 
   // Create TCP client

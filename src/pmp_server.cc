@@ -9,20 +9,60 @@
 #include "tcp_server.h"
 #include "tcp_connection.h"
 #include "protocol.h"
+#include "mandelbrot.h"
 
 static std::unordered_map<int, std::unique_ptr<TcpConnection>> connections;
+static std::unordered_map<int, std::vector<std::uint8_t>> responses;
 static int next_connection_id = 0;
+
+static void send_response(int connection_id)
+{
+  if (responses.count(connection_id) == 0)
+  {
+    fprintf(stderr, "%s: error: no pixels found for connection_id=%d\n", __func__, connection_id);
+    return;
+  }
+
+  // Get pixels
+  auto& pixels = responses[connection_id];
+
+  // Check if there is enough room to send rest of the pixels in one response message
+  Protocol::Response response;
+  if (pixels.size() <= sizeof(response.pixels))
+  {
+    // Send rest of pixels
+    std::copy(pixels.begin(), pixels.end(), response.pixels);
+    response.num_pixels = pixels.size();
+    response.last_message = 1;
+
+    // Erase response from map
+    responses.erase(connection_id);
+  }
+  else
+  {
+    // Send as many pixels as we can
+    std::copy(pixels.begin(), pixels.begin() + sizeof(response.pixels), response.pixels);
+    response.num_pixels = sizeof(response.pixels);
+    response.last_message = 0;
+
+    // Erase the pixels we sent from the vector
+    pixels.erase(pixels.begin(), pixels.begin() + sizeof(response.pixels));
+  }
+
+  // Send the Response
+  connections[connection_id]->write(reinterpret_cast<const std::uint8_t*>(&response), sizeof(response));
+}
 
 static bool on_read(int connection_id, const std::uint8_t* buffer, int len)
 {
-  printf("%s: connection_id=%d len=%d\n", __func__, connection_id, len);
-
   Protocol::Request request;
   if (len == sizeof(request))
   {
     std::copy(buffer, buffer + len, reinterpret_cast<std::uint8_t*>(&request));
 
-    printf("Request: min_c_re=%f min_c_im=%f max_c_re=%f max_c_im=%f x=%d y=%d inf_n=%d\n",
+    printf("%s: connection_id=%d request: min_c_re=%f min_c_im=%f max_c_re=%f max_c_im=%f x=%d y=%d inf_n=%d\n",
+           __func__,
+           connection_id,
            request.min_c_re,
            request.min_c_im,
            request.max_c_re,
@@ -31,11 +71,20 @@ static bool on_read(int connection_id, const std::uint8_t* buffer, int len)
            request.y,
            request.inf_n);
 
-    // TODO: do something
+    // TODO: Check and print time taken to call compute
+    const auto pixels = Mandelbrot::compute(request.min_c_re,
+                                            request.min_c_im,
+                                            request.max_c_re,
+                                            request.max_c_im,
+                                            request.x,
+                                            request.y,
+                                            request.inf_n);
 
-    Protocol::Response response;
-    strncpy(response.text, "Hello World", sizeof(response.text));
-    connections[connection_id]->write(reinterpret_cast<std::uint8_t*>(&response), sizeof(response));
+    // Add (move) pixels into the responses map
+    responses[connection_id] = std::move(pixels);
+
+    // Start sending response back to client
+    send_response(connection_id);
   }
   else
   {
@@ -51,8 +100,18 @@ static bool on_read(int connection_id, const std::uint8_t* buffer, int len)
 static void on_write(int connection_id)
 {
   printf("%s: connection_id=%d\n", __func__, connection_id);
-  connections[connection_id]->close();
-  connections.erase(connection_id);
+
+  if (responses.count(connection_id) == 1)
+  {
+    // There are more pixels to send
+    send_response(connection_id);
+  }
+  else
+  {
+    // All sent, close and erase the connection
+    connections[connection_id]->close();
+    connections.erase(connection_id);
+  }
 }
 
 static void on_error(int connection_id, const std::string& message)

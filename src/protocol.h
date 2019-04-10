@@ -4,7 +4,7 @@
 namespace Protocol
 {
 
-// This simple protocl requires both server and client to be built on the same
+// This simple protocol requires both server and client to be built on the same
 // platform and architecture, otherwise the struct layout and size might differ
 // and everything will explode
 
@@ -21,9 +21,14 @@ struct Request
 
 struct Response
 {
-  // TODO
-  char text[32];
+  std::uint16_t num_pixels;
+  std::uint8_t pixels[(1 << 16) - 64];  // -64 is arbitrary and used to make sure that
+                                        // the struct is smaller than 2^16 - 1
+  std::uint8_t last_message;  // 0 = false, !0 = true
 };
+
+// Maximum data length is 2^16 - 1, so make sure that the struct is not too large
+static_assert(sizeof(Response) < (1 << 16) - 1, "struct Response is too large");
 
 }
 
