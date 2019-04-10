@@ -10,8 +10,8 @@ LDFLAGS  = -lpthread
 # Source code
 SOURCE_SERVER = src/pmp_server.cc src/mandelbrot.cc
 SOURCE_CLIENT = src/pmp_client.cc src/pgm.cc
-SOURCE_EPOLL  = $(wildcard src/epoll/*.cc)
-SOURCE_BOOST  = $(wildcard src/boost/*.cc)
+SOURCE_EPOLL  = $(wildcard src/backend_epoll/*.cc)
+SOURCE_BOOST  = $(wildcard src/backend_boost/*.cc)
 
 # Targets
 all:
@@ -29,11 +29,11 @@ obj/src/%.o: src/%.cc
 	$(dir_guard)
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-obj/src/epoll/%.o: src/epoll/%.cc
+obj/src/backend_epoll/%.o: src/backend_epoll/%.cc
 	$(dir_guard)
 	$(CXX) $(CXXFLAGS) -Isrc -c -o $@ $<
 
-obj/src/boost/%.o: src/boost/%.cc
+obj/src/backend_boost/%.o: src/backend_boost/%.cc
 	$(dir_guard)
 	$(CXX) $(CXXFLAGS) -Isrc -c -o $@ $<
 
