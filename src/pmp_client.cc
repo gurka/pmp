@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <cmath>
 #include <string>
 #include <memory>
 #include <vector>
@@ -8,7 +9,7 @@
 #include "protocol.h"
 #include "pgm.h"
 
-static struct Options
+static struct Arguments
 {
   double min_c_re;
   double min_c_im;
@@ -17,14 +18,39 @@ static struct Options
   int max_n;
   int x;
   int y;
-} options;
+  int divisions;
+} arguments;
+
+static std::vector<Protocol::Request> requests;
+static Protocol::Request ongoing_request;
+static std::vector<std::uint8_t> ongoing_pixels;
+static std::vector<std::uint8_t> total_pixels;
+
+static std::vector<std::tuple<std::string, std::string>> servers;
 static std::unique_ptr<TcpConnection> connection;
-static std::vector<std::uint8_t> pixels;
+
+static void send_request()
+{
+  // Fetch and remove next request from queue
+  ongoing_request = requests.front();
+  requests.erase(requests.begin());
+
+  // Make sure to clear ongoing_pixels
+  ongoing_pixels.clear();
+
+  // And send it
+  connection->write(reinterpret_cast<const std::uint8_t*>(&ongoing_request), sizeof(ongoing_request));
+}
 
 static bool on_read(const std::uint8_t* buffer, int len)
 {
   Protocol::Response response;
-  if (len == sizeof(response))
+  if (len != sizeof(response))
+  {
+    fprintf(stderr, "Unexpected data length (received=%d expected=%d)\n", len, static_cast<int>(sizeof(response)));
+    exit(EXIT_FAILURE);
+  }
+  else
   {
     std::copy(buffer, buffer + len, reinterpret_cast<std::uint8_t*>(&response));
 
@@ -33,7 +59,8 @@ static bool on_read(const std::uint8_t* buffer, int len)
            response.num_pixels,
            response.last_message);
 
-    pixels.insert(pixels.end(), response.pixels, response.pixels + response.num_pixels);
+    // Add the pixels we received
+    ongoing_pixels.insert(ongoing_pixels.end(), response.pixels, response.pixels + response.num_pixels);
 
     if (response.last_message == 0)
     {
@@ -41,8 +68,27 @@ static bool on_read(const std::uint8_t* buffer, int len)
       return true;
     }
 
-    // This was the last message, write the pgm
-    PGM::write_pgm("test.pgm", options.x, options.y, pixels.data());
+    // Add ongoing_pixels to total_pixels, at the correct position
+    const auto sub_re = (arguments.max_c_re - arguments.min_c_re) / arguments.divisions;
+    const auto sub_im = (arguments.max_c_im - arguments.min_c_im) / arguments.divisions;
+    const auto dx = (ongoing_request.min_c_re - arguments.min_c_re) / sub_re;
+    const auto dy = (ongoing_request.min_c_im - arguments.min_c_im) / sub_im;
+    auto to = total_pixels.begin() + (ongoing_request.y * dy * arguments.x) + (ongoing_request.x * dx);
+    auto from = ongoing_pixels.begin();
+    for (auto y = 0; y < ongoing_request.y; y++)
+    {
+      std::copy(from, from + ongoing_request.x, to);
+      from += ongoing_request.x;
+      to += arguments.x;
+    }
+  }
+
+  // Check if there are more requests to handle
+  if (requests.empty())
+  {
+    // TODO: this wont work when there are multiple connections/servers
+    printf("%s: no more requests, writing image\n", __func__);
+    PGM::write_pgm("test.pgm", arguments.x, arguments.y, total_pixels.data());
 
     // Close connection
     connection->close();
@@ -50,10 +96,9 @@ static bool on_read(const std::uint8_t* buffer, int len)
     return false;
   }
 
-  fprintf(stderr, "Unexpected data length (received=%d expected=%d)\n", len, static_cast<int>(sizeof(response)));
-  connection->close();
-  connection.reset();
-  return false;
+  // Handle next request and continue to read messages
+  send_request();
+  return true;
 }
 
 static void on_write()
@@ -79,16 +124,7 @@ static void on_connected(std::unique_ptr<TcpConnection>&& connection_)
   connection = std::move(connection_);
   connection->start(on_read, on_write, on_error);
 
-  // Send Request message
-  Protocol::Request request;
-  request.min_c_re = options.min_c_re;
-  request.min_c_im = options.min_c_im;
-  request.max_c_re = options.max_c_re;
-  request.max_c_im = options.max_c_im;
-  request.x        = options.x;
-  request.y        = options.y;
-  request.inf_n    = options.max_n;
-  connection->write(reinterpret_cast<std::uint8_t*>(&request), sizeof(request));
+  send_request();
 }
 
 int main(int argc, char* argv[])
@@ -99,18 +135,17 @@ int main(int argc, char* argv[])
     return EXIT_FAILURE;
   }
 
-  // Parse numbers
-  int divisions;
+  // Parse options
   try
   {
-    options.min_c_re = std::stod(argv[1]);
-    options.min_c_im = std::stod(argv[2]);
-    options.max_c_re = std::stod(argv[3]);
-    options.max_c_im = std::stod(argv[4]);
-    options.max_n    = std::stoi(argv[5]);
-    options.x        = std::stoi(argv[6]);
-    options.y        = std::stoi(argv[7]);
-    divisions        = std::stoi(argv[8]);
+    arguments.min_c_re  = std::stod(argv[1]);
+    arguments.min_c_im  = std::stod(argv[2]);
+    arguments.max_c_re  = std::stod(argv[3]);
+    arguments.max_c_im  = std::stod(argv[4]);
+    arguments.max_n     = std::stoi(argv[5]);
+    arguments.x         = std::stoi(argv[6]);
+    arguments.y         = std::stoi(argv[7]);
+    arguments.divisions = std::stoi(argv[8]);
   }
   catch (const std::exception& e)
   {
@@ -119,8 +154,40 @@ int main(int argc, char* argv[])
     return EXIT_FAILURE;
   }
 
+  // Create requests based on options
+  const auto sub_x = arguments.x / arguments.divisions;
+  const auto sub_y = arguments.y / arguments.divisions;
+  const auto sub_re = (arguments.max_c_re - arguments.min_c_re) / arguments.divisions;
+  const auto sub_im = (arguments.max_c_im - arguments.min_c_im) / arguments.divisions;
+
+  // Add first request
+  Protocol::Request request;
+  request.min_c_re = arguments.min_c_re;
+  request.min_c_im = arguments.min_c_im;
+  request.max_c_re = arguments.min_c_re + sub_re;
+  request.max_c_im = arguments.min_c_im + sub_im;
+  request.inf_n = arguments.max_n;
+  request.x = sub_x;
+  request.y = sub_y;
+  requests.push_back(request);
+
+  // Add rest of the requests
+  for (auto i = 1; i < std::pow(arguments.divisions, 2); i++)
+  {
+    request.min_c_re += sub_re;
+    request.max_c_re += sub_re;
+    if (request.max_c_re > arguments.max_c_re)
+    {
+      // Reset re and increase im
+      request.min_c_re = arguments.min_c_re;
+      request.max_c_re = arguments.min_c_re + sub_re;
+      request.min_c_im += sub_im;
+      request.max_c_im += sub_im;
+    }
+    requests.push_back(request);
+  }
+
   // Parse list of servers
-  std::vector<std::tuple<std::string, std::string>> servers;
   for (auto i = 9; i < argc; i++)
   {
     const auto arg = std::string(argv[i]);
@@ -136,8 +203,10 @@ int main(int argc, char* argv[])
     servers.emplace_back(address, port);
   }
 
-  // TODO: Use divisions and more than one server
+  // Pre-allocate total_pixels vector
+  total_pixels.insert(total_pixels.begin(), arguments.x * arguments.y, 0u);
 
+  // TODO: Use more than one server
   const auto address = std::get<0>(servers[0]);
   const auto port = std::get<1>(servers[0]);
   printf("Connecting to address %s port %s\n", address.c_str(), port.c_str());

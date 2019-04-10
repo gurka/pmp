@@ -56,45 +56,44 @@ static void send_response(int connection_id)
 static bool on_read(int connection_id, const std::uint8_t* buffer, int len)
 {
   Protocol::Request request;
-  if (len == sizeof(request))
-  {
-    std::copy(buffer, buffer + len, reinterpret_cast<std::uint8_t*>(&request));
-
-    printf("%s: connection_id=%d request: min_c_re=%f min_c_im=%f max_c_re=%f max_c_im=%f x=%d y=%d inf_n=%d\n",
-           __func__,
-           connection_id,
-           request.min_c_re,
-           request.min_c_im,
-           request.max_c_re,
-           request.max_c_im,
-           request.x,
-           request.y,
-           request.inf_n);
-
-    // TODO: Check and print time taken to call compute
-    const auto pixels = Mandelbrot::compute(request.min_c_re,
-                                            request.min_c_im,
-                                            request.max_c_re,
-                                            request.max_c_im,
-                                            request.x,
-                                            request.y,
-                                            request.inf_n);
-
-    // Add (move) pixels into the responses map
-    responses[connection_id] = std::move(pixels);
-
-    // Start sending response back to client
-    send_response(connection_id);
-  }
-  else
+  if (len != sizeof(request))
   {
     fprintf(stderr, "Unexpected data length (received=%d expected=%d)\n", len, static_cast<int>(sizeof(request)));
     connections[connection_id]->close();
     connections.erase(connection_id);
+    return false;
   }
 
-  // Return false to tell TcpConnection not continue reading data
-  return false;
+  std::copy(buffer, buffer + len, reinterpret_cast<std::uint8_t*>(&request));
+
+  printf("%s: connection_id=%d request: min_c_re=%f min_c_im=%f max_c_re=%f max_c_im=%f x=%d y=%d inf_n=%d\n",
+         __func__,
+         connection_id,
+         request.min_c_re,
+         request.min_c_im,
+         request.max_c_re,
+         request.max_c_im,
+         request.x,
+         request.y,
+         request.inf_n);
+
+  // TODO: Check and print time taken to call compute
+  const auto pixels = Mandelbrot::compute(request.min_c_re,
+                                          request.min_c_im,
+                                          request.max_c_re,
+                                          request.max_c_im,
+                                          request.x,
+                                          request.y,
+                                          request.inf_n);
+
+  // Add (move) pixels into the responses map
+  responses[connection_id] = std::move(pixels);
+
+  // Start sending response back to client
+  send_response(connection_id);
+
+  // Return true to tell TcpConnection to continue to read data
+  return true;
 }
 
 static void on_write(int connection_id)
@@ -105,12 +104,6 @@ static void on_write(int connection_id)
   {
     // There are more pixels to send
     send_response(connection_id);
-  }
-  else
-  {
-    // All sent, close and erase the connection
-    connections[connection_id]->close();
-    connections.erase(connection_id);
   }
 }
 
