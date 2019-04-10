@@ -1,20 +1,20 @@
-#ifndef TCP_CONNECTION_BOOST_H_
-#define TCP_CONNECTION_BOOST_H_
+#ifndef TCP_CONNECTION_ASIO_H_
+#define TCP_CONNECTION_ASIO_H_
 
 #include "tcp_backend.h"
 
 #include <cstdint>
 #include <array>
 
-#include <boost/asio.hpp>
+#include <asio.hpp>
 
 namespace TcpBackend
 {
 
-class ConnectionBoost : public Connection
+class ConnectionAsio : public Connection
 {
  public:
-  ConnectionBoost(boost::asio::ip::tcp::socket socket);
+  ConnectionAsio(asio::ip::tcp::socket socket);
 
   void start(const OnRead& on_read,
              const OnWrite& on_write,
@@ -26,7 +26,7 @@ class ConnectionBoost : public Connection
   void async_read_header();
   void async_read_data(int data_len);
 
-  boost::asio::ip::tcp::socket m_socket;
+  asio::ip::tcp::socket m_socket;
 
   // A message consists of a header and data
   // The header is 2 bytes and the value is the data length
@@ -55,4 +55,4 @@ class ConnectionBoost : public Connection
 
 }
 
-#endif  // TCP_CONNECTION_BOOST_H_
+#endif  // TCP_CONNECTION_ASIO_H_

@@ -1,31 +1,31 @@
-#ifndef TCP_CLIENT_BOOST_H_
-#define TCP_CLIENT_BOOST_H_
+#ifndef TCP_CLIENT_ASIO_H_
+#define TCP_CLIENT_ASIO_H_
 
 #include "tcp_backend.h"
 
 #include <string>
 
-#include <boost/asio.hpp>
+#include <asio.hpp>
 
 namespace TcpBackend
 {
 
-class ClientBoost : public Client
+class ClientAsio : public Client
 {
  public:
-  ClientBoost(boost::asio::io_service* io_service,
+  ClientAsio(asio::io_service* io_service,
               const std::string& address,
               const std::string& port,
               const OnConnected& on_connected,
               const OnError& on_error);
 
  private:
-  boost::asio::ip::tcp::socket m_socket;
-  boost::asio::ip::tcp::resolver::iterator m_endpoint_iterator;
+  asio::ip::tcp::socket m_socket;
+  asio::ip::tcp::resolver::iterator m_endpoint_iterator;
   OnConnected m_on_connected;
   OnError m_on_error;
 };
 
 }
 
-#endif  // TCP_CLIENT_BOOST_H_
+#endif  // TCP_CLIENT_ASIO_H_
