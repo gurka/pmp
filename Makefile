@@ -8,7 +8,7 @@ LDFLAGS  = -lpthread
 .PHONY: clean
 
 # Source code
-SOURCE_SERVER = src/pmp_server.cc
+SOURCE_SERVER = src/pmp_server.cc src/mandelbrot.cc
 SOURCE_CLIENT = src/pmp_client.cc
 SOURCE_EPOLL  = $(wildcard src/epoll/*.cc)
 SOURCE_BOOST  = $(wildcard src/boost/*.cc)
