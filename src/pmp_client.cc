@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <string>
 #include <memory>
+#include <vector>
 
 #include "tcp_client.h"
 #include "tcp_connection.h"
@@ -8,6 +9,7 @@
 #include "pgm.h"
 
 static std::unique_ptr<TcpConnection> connection;
+static std::vector<std::uint8_t> pixels;
 
 static bool on_read(const std::uint8_t* buffer, int len)
 {
@@ -21,18 +23,26 @@ static bool on_read(const std::uint8_t* buffer, int len)
            response.num_pixels,
            response.last_message);
 
-    // TODO: handle case where this isn't the last message
+    pixels.insert(pixels.end(), response.pixels, response.pixels + response.num_pixels);
 
-    PGM::write_pgm("test.pgm", 100, 100, response.pixels);
-  }
-  else
-  {
-    fprintf(stderr, "Unexpected data length (received=%d expected=%d)\n", len, static_cast<int>(sizeof(response)));
+    if (response.last_message == 0)
+    {
+      // Read more messages
+      return true;
+    }
+
+    // This was the last message, write the pgm
+    PGM::write_pgm("test.pgm", 1000, 1000, pixels.data());
+
+    // Close connection
+    connection->close();
+    connection.reset();
+    return false;
   }
 
+  fprintf(stderr, "Unexpected data length (received=%d expected=%d)\n", len, static_cast<int>(sizeof(response)));
   connection->close();
   connection.reset();
-
   return false;
 }
 
@@ -65,8 +75,8 @@ static void on_connected(std::unique_ptr<TcpConnection>&& connection_)
   request.min_c_im = -1.5f;
   request.max_c_re =  2.0f;
   request.max_c_im =  1.5f;
-  request.x = 100;
-  request.y = 100;
+  request.x = 1000;
+  request.y = 1000;
   request.inf_n = 1024;
   connection->write(reinterpret_cast<std::uint8_t*>(&request), sizeof(request));
 }
