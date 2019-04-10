@@ -1,8 +1,8 @@
 # Settings
 CXX      = g++
-CXXFLAGS = -std=c++14 -MMD \
+CXXFLAGS = -std=c++14 -MMD -O2 -mtune=native \
            -Wall -Wextra \
-           -pedantic -mtune=native -fno-strict-aliasing
+           -pedantic -fno-strict-aliasing
 LDFLAGS  = -lpthread
 
 .PHONY: clean

@@ -8,6 +8,16 @@
 #include "protocol.h"
 #include "pgm.h"
 
+static struct Options
+{
+  double min_c_re;
+  double min_c_im;
+  double max_c_re;
+  double max_c_im;
+  int max_n;
+  int x;
+  int y;
+} options;
 static std::unique_ptr<TcpConnection> connection;
 static std::vector<std::uint8_t> pixels;
 
@@ -32,7 +42,7 @@ static bool on_read(const std::uint8_t* buffer, int len)
     }
 
     // This was the last message, write the pgm
-    PGM::write_pgm("test.pgm", 1000, 1000, pixels.data());
+    PGM::write_pgm("test.pgm", options.x, options.y, pixels.data());
 
     // Close connection
     connection->close();
@@ -71,35 +81,65 @@ static void on_connected(std::unique_ptr<TcpConnection>&& connection_)
 
   // Send Request message
   Protocol::Request request;
-  request.min_c_re = -1.0f;
-  request.min_c_im = -1.5f;
-  request.max_c_re =  2.0f;
-  request.max_c_im =  1.5f;
-  request.x = 1000;
-  request.y = 1000;
-  request.inf_n = 1024;
+  request.min_c_re = options.min_c_re;
+  request.min_c_im = options.min_c_im;
+  request.max_c_re = options.max_c_re;
+  request.max_c_im = options.max_c_im;
+  request.x        = options.x;
+  request.y        = options.y;
+  request.inf_n    = options.max_n;
   connection->write(reinterpret_cast<std::uint8_t*>(&request), sizeof(request));
 }
 
 int main(int argc, char* argv[])
 {
-  if (argc != 2)
+  if (argc < 10)
   {
-    fprintf(stderr, "usage: %s ADDRESS:PORT\n", argv[0]);
+    fprintf(stderr, "usage: %s min_c_re min_c_im max_c_re max_c_im max_n x y divisions list-of-servers\n", argv[0]);
     return EXIT_FAILURE;
   }
 
-  // Split argument into address and port
-  const auto arg = std::string(argv[1]);
-  const auto sep = arg.find(":");
-  if (sep == std::string::npos || sep == arg.size() - 1)
+  // Parse numbers
+  int divisions;
+  try
   {
-    fprintf(stderr, "usage: %s ADDRESS:PORT\n", argv[0]);
+    options.min_c_re = std::stod(argv[1]);
+    options.min_c_im = std::stod(argv[2]);
+    options.max_c_re = std::stod(argv[3]);
+    options.max_c_im = std::stod(argv[4]);
+    options.max_n    = std::stoi(argv[5]);
+    options.x        = std::stoi(argv[6]);
+    options.y        = std::stoi(argv[7]);
+    divisions        = std::stoi(argv[8]);
+  }
+  catch (const std::exception& e)
+  {
+    fprintf(stderr, "%s\n", e.what());
+    fprintf(stderr, "usage: %s min_c_re min_c_im max_c_re max_c_im max_n x y divisions list-of-servers\n", argv[0]);
     return EXIT_FAILURE;
   }
 
-  const auto address = arg.substr(0, sep);
-  const auto port = arg.substr(sep + 1);
+  // Parse list of servers
+  std::vector<std::tuple<std::string, std::string>> servers;
+  for (auto i = 9; i < argc; i++)
+  {
+    const auto arg = std::string(argv[i]);
+    const auto sep = arg.find(":");
+    if (sep == std::string::npos || sep == arg.size() - 1)
+    {
+      fprintf(stderr, "usage: %s min_c_re min_c_im max_c_re max_c_im max_n x y divisions list-of-servers\n", argv[0]);
+      return EXIT_FAILURE;
+    }
+
+    const auto address = arg.substr(0, sep);
+    const auto port = arg.substr(sep + 1);
+    servers.emplace_back(address, port);
+  }
+
+  // TODO: Use divisions and more than one server
+
+  const auto address = std::get<0>(servers[0]);
+  const auto port = std::get<1>(servers[0]);
   printf("Connecting to address %s port %s\n", address.c_str(), port.c_str());
 
   // Create TCP client

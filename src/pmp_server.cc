@@ -150,7 +150,8 @@ int main(int argc, char* argv[])
   }
   catch (const std::exception& e)
   {
-    fprintf(stderr, "Could not parse given port.\n");
+    fprintf(stderr, "%s\n", e.what());
+    fprintf(stderr, "usage: %s PORT\n", argv[0]);
     return EXIT_FAILURE;
   }
 

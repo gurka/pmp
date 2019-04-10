@@ -7,10 +7,10 @@
 namespace Mandelbrot
 {
 
-std::vector<std::uint8_t> compute(float min_c_re,
-                                  float min_c_im,
-                                  float max_c_re,
-                                  float max_c_im,
+std::vector<std::uint8_t> compute(double min_c_re,
+                                  double min_c_im,
+                                  double max_c_re,
+                                  double max_c_im,
                                   int x,
                                   int y,
                                   int inf_n);

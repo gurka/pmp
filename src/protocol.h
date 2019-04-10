@@ -10,10 +10,10 @@ namespace Protocol
 
 struct Request
 {
-  float min_c_re;
-  float min_c_im;
-  float max_c_re;
-  float max_c_im;
+  double min_c_re;
+  double min_c_im;
+  double max_c_re;
+  double max_c_im;
   int x;
   int y;
   int inf_n;

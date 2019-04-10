@@ -3,10 +3,10 @@
 #include <cmath>
 #include <complex>
 
-std::vector<std::uint8_t> Mandelbrot::compute(float min_c_re,
-                                              float min_c_im,
-                                              float max_c_re,
-                                              float max_c_im,
+std::vector<std::uint8_t> Mandelbrot::compute(double min_c_re,
+                                              double min_c_im,
+                                              double max_c_re,
+                                              double max_c_im,
                                               int x,
                                               int y,
                                               int inf_n)
@@ -20,17 +20,17 @@ std::vector<std::uint8_t> Mandelbrot::compute(float min_c_re,
   //          we'll get dx=0.4 and dy=0.4
   //          pixel at 0,0 corresponds to -2.0,-2.0, pixel at 1,1 to -1.6,-1.6
   //          and so on.
-  const auto dx = (max_c_re - min_c_re) / static_cast<float>(x);
-  const auto dy = (max_c_im - min_c_im) / static_cast<float>(y);
+  const auto dx = (max_c_re - min_c_re) / static_cast<double>(x);
+  const auto dy = (max_c_im - min_c_im) / static_cast<double>(y);
 
   // Iterate over each pixel
   for (auto py = 0; py < y; py++)
   {
     for (auto px = 0; px < x; px++)
     {
-      const auto c = std::complex<float>(min_c_re + (px * dx),
-                                         min_c_im + (py * dy));
-      auto z = std::complex<float>(0.0f, 0.0f);
+      const auto c = std::complex<double>(min_c_re + (px * dx),
+                                          min_c_im + (py * dy));
+      auto z = std::complex<double>(0.0f, 0.0f);
       int n = 0;
       while (n < inf_n && std::abs(z) < 2.0f)
       {
@@ -44,8 +44,7 @@ std::vector<std::uint8_t> Mandelbrot::compute(float min_c_re,
       }
       else
       {
-        // TODO: Map 0..inf_n to 0..255 instead?
-        // Implictly cast int to std::uint8_t (i.e. n modulus 255)
+        // Implicit modulus 256 since pixels are std::uint8_t
         pixels.push_back(n);
       }
     }
