@@ -4,8 +4,7 @@
 #include <memory>
 #include <vector>
 
-#include "tcp_client.h"
-#include "tcp_connection.h"
+#include "tcp_backend.h"
 #include "protocol.h"
 #include "pgm.h"
 
@@ -27,7 +26,7 @@ static std::vector<std::uint8_t> ongoing_pixels;
 static std::vector<std::uint8_t> total_pixels;
 
 static std::vector<std::tuple<std::string, std::string>> servers;
-static std::unique_ptr<TcpConnection> connection;
+static std::unique_ptr<TcpBackend::Connection> connection;
 
 static void send_request()
 {
@@ -116,7 +115,7 @@ static void on_error(const std::string& message)
   }
 }
 
-static void on_connected(std::unique_ptr<TcpConnection>&& connection_)
+static void on_connected(std::unique_ptr<TcpBackend::Connection>&& connection_)
 {
   puts(__func__);
 
@@ -212,17 +211,17 @@ int main(int argc, char* argv[])
   printf("Connecting to address %s port %s\n", address.c_str(), port.c_str());
 
   // Create TCP client
-  auto tcp_client = TcpClient::create(address, port);
+  auto tcp_client = TcpBackend::create_client(address, port, on_connected, on_error);
   if (!tcp_client)
   {
     // Error message printed by TcpServer::create
     return EXIT_FAILURE;
   }
 
-  // Start client with a callback to on_connected
+  // Start network backend
   // It will run forever
   // TODO: catch ^C and break
-  tcp_client->start(on_connected, on_error);
+  TcpBackend::run();
 
   return EXIT_SUCCESS;
 }

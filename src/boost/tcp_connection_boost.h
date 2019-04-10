@@ -1,17 +1,20 @@
 #ifndef TCP_CONNECTION_BOOST_H_
 #define TCP_CONNECTION_BOOST_H_
 
-#include "tcp_connection.h"
+#include "tcp_backend.h"
 
 #include <cstdint>
 #include <array>
 
 #include <boost/asio.hpp>
 
-class TcpConnectionBoost : public TcpConnection
+namespace TcpBackend
+{
+
+class ConnectionBoost : public Connection
 {
  public:
-  TcpConnectionBoost(boost::asio::ip::tcp::socket socket);
+  ConnectionBoost(boost::asio::ip::tcp::socket socket);
 
   void start(const OnRead& on_read,
              const OnWrite& on_write,
@@ -49,5 +52,7 @@ class TcpConnectionBoost : public TcpConnection
   OnWrite m_on_write;
   OnError m_on_error;
 };
+
+}
 
 #endif  // TCP_CONNECTION_BOOST_H_

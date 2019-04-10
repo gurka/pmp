@@ -1,23 +1,31 @@
 #ifndef TCP_CLIENT_BOOST_H_
 #define TCP_CLIENT_BOOST_H_
 
-#include "tcp_client.h"
+#include "tcp_backend.h"
 
 #include <string>
 
 #include <boost/asio.hpp>
 
-class TcpClientBoost : public TcpClient
+namespace TcpBackend
+{
+
+class ClientBoost : public Client
 {
  public:
-  TcpClientBoost(const std::string& address, const std::string& port);
-
-  void start(const OnConnected& on_connected, const OnError& on_error) override;
+  ClientBoost(boost::asio::io_service* io_service,
+              const std::string& address,
+              const std::string& port,
+              const OnConnected& on_connected,
+              const OnError& on_error);
 
  private:
-  boost::asio::io_service m_io_service;
   boost::asio::ip::tcp::socket m_socket;
   boost::asio::ip::tcp::resolver::iterator m_endpoint_iterator;
+  OnConnected m_on_connected;
+  OnError m_on_error;
 };
+
+}
 
 #endif  // TCP_CLIENT_BOOST_H_

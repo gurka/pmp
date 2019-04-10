@@ -1,6 +1,9 @@
 #include "tcp_connection_boost.h"
 
-TcpConnectionBoost::TcpConnectionBoost(boost::asio::ip::tcp::socket socket)
+namespace TcpBackend
+{
+
+ConnectionBoost::ConnectionBoost(boost::asio::ip::tcp::socket socket)
     : m_socket(std::move(socket)),
       m_read_buffer(),
       m_write_buffer(),
@@ -11,9 +14,9 @@ TcpConnectionBoost::TcpConnectionBoost(boost::asio::ip::tcp::socket socket)
 {
 }
 
-void TcpConnectionBoost::start(const OnRead& on_read,
-                               const OnWrite& on_write,
-                               const OnError& on_error)
+void ConnectionBoost::start(const OnRead& on_read,
+                            const OnWrite& on_write,
+                            const OnError& on_error)
 {
   // Save callbacks
   m_on_read   = on_read;
@@ -24,7 +27,7 @@ void TcpConnectionBoost::start(const OnRead& on_read,
   async_read_header();
 }
 
-void TcpConnectionBoost::write(const std::uint8_t* buffer, int len)
+void ConnectionBoost::write(const std::uint8_t* buffer, int len)
 {
   if (m_write_ongoing)
   {
@@ -73,12 +76,12 @@ void TcpConnectionBoost::write(const std::uint8_t* buffer, int len)
                            });
 }
 
-void TcpConnectionBoost::close()
+void ConnectionBoost::close()
 {
   m_socket.close();
 }
 
-void TcpConnectionBoost::async_read_header()
+void ConnectionBoost::async_read_header()
 {
   // Read header (2 bytes) into m_read_buffer
   boost::asio::async_read(m_socket,
@@ -108,7 +111,7 @@ void TcpConnectionBoost::async_read_header()
                           });
 }
 
-void TcpConnectionBoost::async_read_data(int data_len)
+void ConnectionBoost::async_read_data(int data_len)
 {
   // Read data (len bytes) into m_read_buffer
   boost::asio::async_read(m_socket,
@@ -134,4 +137,6 @@ void TcpConnectionBoost::async_read_data(int data_len)
                               async_read_header();
                             }
                           });
+}
+
 }

@@ -6,12 +6,11 @@
 
 #include <unistd.h>
 
-#include "tcp_server.h"
-#include "tcp_connection.h"
+#include "tcp_backend.h"
 #include "protocol.h"
 #include "mandelbrot.h"
 
-static std::unordered_map<int, std::unique_ptr<TcpConnection>> connections;
+static std::unordered_map<int, std::unique_ptr<TcpBackend::Connection>> connections;
 static std::unordered_map<int, std::vector<std::uint8_t>> responses;
 static int next_connection_id = 0;
 
@@ -114,7 +113,7 @@ static void on_error(int connection_id, const std::string& message)
   connections.erase(connection_id);
 }
 
-static void on_accept(std::unique_ptr<TcpConnection>&& connection)
+static void on_accept(std::unique_ptr<TcpBackend::Connection>&& connection)
 {
   // Save connection
   const auto connection_id = next_connection_id++;
@@ -170,17 +169,17 @@ int main(int argc, char* argv[])
   printf("Using port: %d\n", port);
 
   // Create TCP server
-  auto tcp_server = TcpServer::create(port);
+  auto tcp_server = TcpBackend::create_server(port, on_accept);
   if (!tcp_server)
   {
     // Error message printed by TcpServer::create
     return EXIT_FAILURE;
   }
 
-  // Start server with a callback to on_accept
+  // Start network backend
   // It will run forever
   // TODO: catch ^C and break
-  tcp_server->start(on_accept);
+  TcpBackend::run();
 
   return EXIT_SUCCESS;
 }
