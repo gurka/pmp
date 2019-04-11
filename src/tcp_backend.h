@@ -9,16 +9,61 @@
 namespace TcpBackend
 {
 
+// Forward declarations
+
 class Connection;
 class Client;
 class Server;
 
 // Callback types
-using OnRead      = std::function<bool(const std::uint8_t*, int)>;
+
+/**
+ * @brief OnRead callback
+ *
+ * Called when the Connection has read data
+ *
+ * @param[in]  data  Pointer to data
+ * @param[in]  len   Length of data
+ *
+ * @return true if the Connection should continue to read data, otherwise false
+ */
+using OnRead      = std::function<bool(const std::uint8_t* data, int len)>;
+
+/**
+ * @brief OnWrite callback
+ *
+ * Called when the Connection has written queued data
+ */
 using OnWrite     = std::function<void(void)>;
-using OnError     = std::function<void(const std::string&)>;
-using OnConnected = std::function<void(std::unique_ptr<Connection>&&)>;
-using OnAccept    = std::function<void(std::unique_ptr<Connection>&&)>;
+
+/**
+ * @brief OnError callback
+ *
+ * Called by Connection, Client or Server when an error occurs
+ *
+ * @param[in]  message  The error message
+ */
+using OnError     = std::function<void(const std::string& message)>;
+
+/**
+ * @brief OnConnected callback
+ *
+ * Called by Client when it has connected
+ *
+ * @param[in]  connection  The Connection that represents the connection
+ */
+using OnConnected = std::function<void(std::unique_ptr<Connection>&& connection)>;
+
+/**
+ * @brief OnAccept callback
+ *
+ * Called by Server when a new connection has been accepted
+ *
+ * @param[in]  connection  The new Connection
+ */
+using OnAccept    = std::function<void(std::unique_ptr<Connection>&& connection)>;
+
+// Functions
 
 /**
  * @brief Creates a TCP client
@@ -56,25 +101,62 @@ std::unique_ptr<Server> create_server(std::uint16_t port,
  */
 void run();
 
+/**
+ * @brief Represents a connection
+ *
+ * Created by Client or Server when a connection has been established
+ */
 class Connection
 {
  public:
   virtual ~Connection() = default;
 
+  /**
+   * @brief Starts the connection
+   *
+   * Callbacks are saved and the read procedure is started
+   *
+   * @param[in]  on_read   OnRead callback, see @OnRead
+   * @param[in]  on_write  OnWrite callback, see @OnWrite
+   * @param[in]  on_error  OnError callback, see @OnError
+   */
   virtual void start(const OnRead& on_read,
                      const OnWrite& on_write,
                      const OnError& on_error) = 0;
+
+  /**
+   * @brief Send data to the connection (async)
+   *
+   * @param[in]  buffer  The data to send
+   * @param[in]  len     Length of data
+   */
   virtual void write(const std::uint8_t* buffer, int len) = 0;
+
+  /**
+   * @brief Closes the connection
+   *
+   * Any ongoing async tasks will be aborted and the OnError
+   * callback will be called for those tasks
+   */
   virtual void close() = 0;
 };
 
+/**
+ * @brief Used to start a connection
+ *
+ * See @create_client
+ */
 class Client
 {
  public:
   virtual ~Client() = default;
 };
 
-
+/**
+ * @brief Used to accept new connections
+ *
+ * See @create_server
+ */
 class Server
 {
  public:

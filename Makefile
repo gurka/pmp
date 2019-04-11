@@ -19,7 +19,7 @@ all:
 
 epoll: bin/epoll/pmp_server bin/epoll/pmp_client
 
-asio: CXXFLAGS += -Iexternal/asio/asio/include
+asio: CXXFLAGS += -isystem external/asio/asio/include
 asio: bin/asio/pmp_server bin/asio/pmp_client
 
 dir_guard = @mkdir -p $(@D)
