@@ -50,6 +50,7 @@ using OnError = std::function<void(const std::string& message)>;
  *
  * @param[in]  connection  The Connection that represents the connection
  */
+// TODO: Add address & port parameters, so it's possible to map Connection back to a Server?
 using OnConnected = std::function<void(std::unique_ptr<Connection>&& connection)>;
 
 /**
