@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <cmath>
+#include <complex>
 #include <deque>
 #include <string>
 #include <memory>
@@ -12,13 +13,11 @@
 
 static struct Arguments
 {
-  double min_c_re;
-  double min_c_im;
-  double max_c_re;
-  double max_c_im;
-  int max_n;
-  int x;
-  int y;
+  std::complex<double> min_c;
+  std::complex<double> max_c;
+  int image_width;
+  int image_height;
+  int max_iter;
   int divisions;
 } arguments;
 
@@ -82,17 +81,18 @@ static bool on_read(int session_id, const std::uint8_t* buffer, int len)
 
   // Add current_pixels to image_pixels, at the correct position
   // TODO: Simplify this, if possible
-  const auto sub_re = (arguments.max_c_re - arguments.min_c_re) / arguments.divisions;
-  const auto sub_im = (arguments.max_c_im - arguments.min_c_im) / arguments.divisions;
-  const auto dx = (session.current_request.min_c_re - arguments.min_c_re) / sub_re;
-  const auto dy = (session.current_request.min_c_im - arguments.min_c_im) / sub_im;
-  auto to = image_pixels.begin() + (session.current_request.image_height * dy * arguments.x) + (session.current_request.image_width * dx);
+  const auto sub_c = (arguments.max_c - arguments.min_c) / static_cast<double>(arguments.divisions);
+  const auto dx = (session.current_request.min_c_re - arguments.min_c.real()) / sub_c.real();
+  const auto dy = (session.current_request.min_c_im - arguments.min_c.imag()) / sub_c.imag();
+  auto to = image_pixels.begin() +
+            (session.current_request.image_height * dy * arguments.image_width) +
+            (session.current_request.image_width * dx);
   auto from = session.current_pixels.begin();
   for (auto y = 0; y < session.current_request.image_height; y++)
   {
     std::copy(from, from + session.current_request.image_width, to);
     from += session.current_request.image_width;
-    to += arguments.x;
+    to += arguments.image_width;
   }
 
   // Check if there are more requests to handle
@@ -111,7 +111,7 @@ static bool on_read(int session_id, const std::uint8_t* buffer, int len)
   if (sessions.empty())
   {
     printf("%s: no more requests and no more sessions, writing image\n", __func__);
-    PGM::write_pgm("test.pgm", arguments.x, arguments.y, image_pixels.data());
+    PGM::write_pgm("test.pgm", arguments.image_width, arguments.image_height, image_pixels.data());
   }
 
   return false;
@@ -177,14 +177,16 @@ int main(int argc, char* argv[])
   // Parse options
   try
   {
-    arguments.min_c_re  = std::stod(argv[1]);
-    arguments.min_c_im  = std::stod(argv[2]);
-    arguments.max_c_re  = std::stod(argv[3]);
-    arguments.max_c_im  = std::stod(argv[4]);
-    arguments.max_n     = std::stoi(argv[5]);
-    arguments.x         = std::stoi(argv[6]);
-    arguments.y         = std::stoi(argv[7]);
-    arguments.divisions = std::stoi(argv[8]);
+    const auto min_c_re = std::stod(argv[1]);
+    const auto min_c_im = std::stod(argv[2]);
+    const auto max_c_re = std::stod(argv[3]);
+    const auto max_c_im = std::stod(argv[4]);
+    arguments.min_c        = std::complex<double>(min_c_re, min_c_im);
+    arguments.max_c        = std::complex<double>(max_c_re, max_c_im);
+    arguments.max_iter     = std::stoi(argv[5]);
+    arguments.image_width  = std::stoi(argv[6]);
+    arguments.image_height = std::stoi(argv[7]);
+    arguments.divisions    = std::stoi(argv[8]);
   }
   catch (const std::exception& e)
   {
@@ -194,34 +196,33 @@ int main(int argc, char* argv[])
   }
 
   // Create requests based on options
-  const auto sub_x = arguments.x / arguments.divisions;
-  const auto sub_y = arguments.y / arguments.divisions;
-  const auto sub_re = (arguments.max_c_re - arguments.min_c_re) / arguments.divisions;
-  const auto sub_im = (arguments.max_c_im - arguments.min_c_im) / arguments.divisions;
+  const auto sub_x = arguments.image_width / arguments.divisions;
+  const auto sub_y = arguments.image_height / arguments.divisions;
+  const auto sub_c = (arguments.max_c - arguments.min_c) / static_cast<double>(arguments.divisions);
 
   // Add first request
   Protocol::Request request;
-  request.min_c_re     = arguments.min_c_re;
-  request.min_c_im     = arguments.min_c_im;
-  request.max_c_re     = arguments.min_c_re + sub_re;
-  request.max_c_im     = arguments.min_c_im + sub_im;
+  request.min_c_re     = arguments.min_c.real();
+  request.min_c_im     = arguments.min_c.imag();
+  request.max_c_re     = arguments.min_c.real() + sub_c.real();
+  request.max_c_im     = arguments.min_c.imag() + sub_c.imag();
   request.image_width  = sub_x;
   request.image_height = sub_y;
-  request.max_iter     = arguments.max_n;
+  request.max_iter     = arguments.max_iter;
   request_queue.push_back(request);
 
   // Add rest of the requests
   for (auto i = 1; i < std::pow(arguments.divisions, 2); i++)
   {
-    request.min_c_re += sub_re;
-    request.max_c_re += sub_re;
-    if (request.max_c_re > arguments.max_c_re)
+    request.min_c_re += sub_c.real();
+    request.max_c_re += sub_c.real();
+    if (request.max_c_re > arguments.max_c.real())
     {
       // Reset re and increase im
-      request.min_c_re = arguments.min_c_re;
-      request.max_c_re = arguments.min_c_re + sub_re;
-      request.min_c_im += sub_im;
-      request.max_c_im += sub_im;
+      request.min_c_re = arguments.min_c.real();
+      request.max_c_re = arguments.min_c.real() + sub_c.real();
+      request.min_c_im += sub_c.imag();
+      request.max_c_im += sub_c.imag();
     }
     request_queue.push_back(request);
   }
@@ -244,7 +245,7 @@ int main(int argc, char* argv[])
   }
 
   // Pre-allocate total_pixels vector
-  image_pixels.insert(image_pixels.begin(), arguments.x * arguments.y, 0u);
+  image_pixels.insert(image_pixels.begin(), arguments.image_width * arguments.image_height, 0u);
 
   // Create one TCP client per server
   std::vector<std::unique_ptr<TcpBackend::Client>> clients;
