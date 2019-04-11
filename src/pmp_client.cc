@@ -136,18 +136,21 @@ static void on_error_client(const std::string& message)
 
 static void on_connected(std::unique_ptr<TcpBackend::Connection>&& connection)
 {
+  // One unique id per session/connection
   static int next_session_id = 0;
   const auto session_id = next_session_id;
   next_session_id += 1;
 
   printf("%s: session_id=%d\n", __func__, session_id);
 
-  // Save new session
-  Session session;
+  // Create and store session object
+  auto& session = sessions[session_id];
   session.connection = std::move(connection);
-  sessions.emplace(session_id, std::move(session));
 
-  // Create callbacks and start connection
+  // Create callbacks
+  // These are just wrappers for on_read/on_write/on_error_connection
+  // but with session_id captured, so that we can differentiate the
+  // session in the callback functions
   auto read = [session_id](const std::uint8_t* buffer, int len)
   {
     return on_read(session_id, buffer, len);
@@ -160,21 +163,25 @@ static void on_connected(std::unique_ptr<TcpBackend::Connection>&& connection)
   {
     on_error_connection(session_id, message);
   };
+
+  // Set callbacks and start the read procedure
   sessions[session_id].connection->start(read, write, error);
 
-  // Send next request in queue to this server
+  // Send next request in queue to this session
   send_request(session_id);
 }
 
 int main(int argc, char* argv[])
 {
+  // Check and parse arguments
   if (argc < 10)
   {
-    fprintf(stderr, "usage: %s min_c_re min_c_im max_c_re max_c_im max_n x y divisions list-of-servers\n", argv[0]);
+    fprintf(stderr,
+            "usage: %s min_c_re min_c_im max_c_re max_c_im max_n x y divisions list-of-servers\n",
+            argv[0]);
     return EXIT_FAILURE;
   }
 
-  // Parse options
   try
   {
     const auto min_c_re = std::stod(argv[1]);
@@ -191,15 +198,36 @@ int main(int argc, char* argv[])
   catch (const std::exception& e)
   {
     fprintf(stderr, "%s\n", e.what());
-    fprintf(stderr, "usage: %s min_c_re min_c_im max_c_re max_c_im max_n x y divisions list-of-servers\n", argv[0]);
+    fprintf(stderr,
+            "usage: %s min_c_re min_c_im max_c_re max_c_im max_n x y divisions list-of-servers\n",
+            argv[0]);
     return EXIT_FAILURE;
+  }
+
+  std::vector<std::tuple<std::string, std::string>> servers;
+  for (auto i = 9; i < argc; i++)
+  {
+    const auto arg = std::string(argv[i]);
+    const auto sep = arg.find(":");
+    if (sep == std::string::npos || sep == arg.size() - 1)
+    {
+      fprintf(stderr,
+              "usage: %s min_c_re min_c_im max_c_re max_c_im max_n x y divisions list-of-servers\n",
+              argv[0]);
+      return EXIT_FAILURE;
+    }
+
+    const auto address = arg.substr(0, sep);
+    const auto port = arg.substr(sep + 1);
+    servers.emplace_back(address, port);
   }
 
   // Split image/computation into sub-images and add a request
   // for each sub-image
   const auto sub_image_width  = arguments.image_width / arguments.divisions;
   const auto sub_image_height = arguments.image_height / arguments.divisions;
-  const auto sub_image_c_step = (arguments.max_c - arguments.min_c) / static_cast<double>(arguments.divisions);
+  const auto sub_image_c_step = (arguments.max_c - arguments.min_c) /
+                                static_cast<double>(arguments.divisions);
   for (auto y = 0; y < arguments.divisions; y++)
   {
     for (auto x = 0; x < arguments.divisions; x++)
@@ -216,24 +244,7 @@ int main(int argc, char* argv[])
     }
   }
 
-  // Parse list of servers
-  std::vector<std::tuple<std::string, std::string>> servers;
-  for (auto i = 9; i < argc; i++)
-  {
-    const auto arg = std::string(argv[i]);
-    const auto sep = arg.find(":");
-    if (sep == std::string::npos || sep == arg.size() - 1)
-    {
-      fprintf(stderr, "usage: %s min_c_re min_c_im max_c_re max_c_im max_n x y divisions list-of-servers\n", argv[0]);
-      return EXIT_FAILURE;
-    }
-
-    const auto address = arg.substr(0, sep);
-    const auto port = arg.substr(sep + 1);
-    servers.emplace_back(address, port);
-  }
-
-  // Pre-allocate total_pixels vector
+  // Pre-allocate image_pixels vector
   image_pixels.insert(image_pixels.begin(), arguments.image_width * arguments.image_height, 0u);
 
   // Create one TCP client per server
@@ -245,7 +256,8 @@ int main(int argc, char* argv[])
 
     printf("Creating TCP client to address %s port %s\n", address.c_str(), port.c_str());
 
-    // Create TCP client
+    // Create TCP client - if any error occurs just ignore it and continue with next
+    // TcpBackend::create_client prints message on error
     auto tcp_client = TcpBackend::create_client(address, port, on_connected, on_error_client);
     if (tcp_client)
     {
@@ -253,15 +265,16 @@ int main(int argc, char* argv[])
     }
   }
 
+  // If no TCP clients could be created then we have to abort
   if (clients.empty())
   {
-    fprintf(stderr, "No TCP client could be created successfully\n");
+    fprintf(stderr, "No TCP client could be created\n");
     return EXIT_FAILURE;
   }
 
-  // Start network backend
-  // It will run forever
-  // TODO: catch ^C and break
+  // Start network backend, it will run until there are no more
+  // active async tasks
+  // TODO: catch ^C and quit gracefully
   TcpBackend::run();
 
   return EXIT_SUCCESS;
