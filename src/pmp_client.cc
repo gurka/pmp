@@ -81,16 +81,17 @@ static bool on_read(int session_id, const std::uint8_t* buffer, int len)
   }
 
   // Add current_pixels to image_pixels, at the correct position
+  // TODO: Simplify this, if possible
   const auto sub_re = (arguments.max_c_re - arguments.min_c_re) / arguments.divisions;
   const auto sub_im = (arguments.max_c_im - arguments.min_c_im) / arguments.divisions;
   const auto dx = (session.current_request.min_c_re - arguments.min_c_re) / sub_re;
   const auto dy = (session.current_request.min_c_im - arguments.min_c_im) / sub_im;
-  auto to = image_pixels.begin() + (session.current_request.y * dy * arguments.x) + (session.current_request.x * dx);
+  auto to = image_pixels.begin() + (session.current_request.image_height * dy * arguments.x) + (session.current_request.image_width * dx);
   auto from = session.current_pixels.begin();
-  for (auto y = 0; y < session.current_request.y; y++)
+  for (auto y = 0; y < session.current_request.image_height; y++)
   {
-    std::copy(from, from + session.current_request.x, to);
-    from += session.current_request.x;
+    std::copy(from, from + session.current_request.image_width, to);
+    from += session.current_request.image_width;
     to += arguments.x;
   }
 
@@ -200,13 +201,13 @@ int main(int argc, char* argv[])
 
   // Add first request
   Protocol::Request request;
-  request.min_c_re = arguments.min_c_re;
-  request.min_c_im = arguments.min_c_im;
-  request.max_c_re = arguments.min_c_re + sub_re;
-  request.max_c_im = arguments.min_c_im + sub_im;
-  request.inf_n = arguments.max_n;
-  request.x = sub_x;
-  request.y = sub_y;
+  request.min_c_re     = arguments.min_c_re;
+  request.min_c_im     = arguments.min_c_im;
+  request.max_c_re     = arguments.min_c_re + sub_re;
+  request.max_c_im     = arguments.min_c_im + sub_im;
+  request.image_width  = sub_x;
+  request.image_height = sub_y;
+  request.max_iter     = arguments.max_n;
   request_queue.push_back(request);
 
   // Add rest of the requests

@@ -8,23 +8,25 @@ namespace Protocol
 // platform and architecture, otherwise the struct layout and size might differ
 // and everything will explode
 
+// TODO: Seralize/deseralize to something like json (https://github.com/nlohmann/json)
+
 struct Request
 {
   double min_c_re;
   double min_c_im;
   double max_c_re;
   double max_c_im;
-  int x;
-  int y;
-  int inf_n;
+  int image_width;
+  int image_height;
+  int max_iter;
 };
 
 struct Response
 {
-  std::uint16_t num_pixels;
+  int num_pixels;
   std::uint8_t pixels[(1 << 16) - 64];  // -64 is arbitrary and used to make sure that
                                         // the struct is smaller than 2^16 - 1
-  std::uint8_t last_message;  // 0 = false, !0 = true
+  int last_message;  // 0 = false, !0 = true
 };
 
 // Maximum data length is 2^16 - 1, so make sure that the struct is not too large

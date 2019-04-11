@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
+#include <complex>
 #include <string>
 #include <unordered_map>
 
@@ -65,25 +66,23 @@ static bool on_read(int connection_id, const std::uint8_t* buffer, int len)
 
   std::copy(buffer, buffer + len, reinterpret_cast<std::uint8_t*>(&request));
 
-  printf("%s: connection_id=%d request: min_c_re=%f min_c_im=%f max_c_re=%f max_c_im=%f x=%d y=%d inf_n=%d\n",
+  printf("%s: connection_id=%d request: min_c_re=%f min_c_im=%f max_c_re=%f max_c_im=%f image_width=%d image_height=%d max_iter=%d\n",
          __func__,
          connection_id,
          request.min_c_re,
          request.min_c_im,
          request.max_c_re,
          request.max_c_im,
-         request.x,
-         request.y,
-         request.inf_n);
+         request.image_width,
+         request.image_height,
+         request.max_iter);
 
   // TODO: Check and print time taken to call compute
-  const auto pixels = Mandelbrot::compute(request.min_c_re,
-                                          request.min_c_im,
-                                          request.max_c_re,
-                                          request.max_c_im,
-                                          request.x,
-                                          request.y,
-                                          request.inf_n);
+  const auto pixels = Mandelbrot::compute(std::complex<double>(request.min_c_re, request.min_c_im),
+                                          std::complex<double>(request.max_c_re, request.max_c_im),
+                                          request.image_width,
+                                          request.image_height,
+                                          request.max_iter);
 
   // Add (move) pixels into the responses map
   responses[connection_id] = std::move(pixels);
