@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <cmath>
+#include <chrono>
 #include <complex>
 #include <deque>
 #include <string>
@@ -310,10 +311,19 @@ int main(int argc, char* argv[])
     return EXIT_FAILURE;
   }
 
+  const auto time_begin = std::chrono::steady_clock::now();
+
   // Start network backend, it will run until there are no more
   // active async tasks
   // TODO: catch ^C and quit gracefully
   TcpBackend::run();
+
+  const auto time_end = std::chrono::steady_clock::now();
+
+  LOG_INFO("%s executed for a total time of %dms (%ds)",
+           argv[0],
+           std::chrono::duration_cast<std::chrono::milliseconds>(time_end - time_begin).count(),
+           std::chrono::duration_cast<std::chrono::seconds>(time_end - time_begin).count());
 
   return EXIT_SUCCESS;
 }
