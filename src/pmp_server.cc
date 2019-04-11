@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
+#include <chrono>
 #include <complex>
 #include <string>
 #include <unordered_map>
@@ -56,7 +57,7 @@ static void send_response(int connection_id)
 
 static void on_disconnected(int connection_id)
 {
-  LOG_INFO("%s: connection_id=%d", __func__, connection_id);
+  LOG_INFO("Connection %d disconnected", connection_id);
 
   // Delete the connection
   connections.erase(connection_id);
@@ -85,8 +86,7 @@ static void on_read(int connection_id, const std::uint8_t* buffer, int len)
 
   std::copy(buffer, buffer + len, reinterpret_cast<std::uint8_t*>(&request));
 
-  LOG_INFO("%s: connection_id=%d request: min_c_re=%f min_c_im=%f max_c_re=%f max_c_im=%f image_width=%d image_height=%d max_iter=%d",
-           __func__,
+  LOG_INFO("Received request from connection %d: (%.2lf, %.2lf)..(%.2lf, %.2lf) (%d, %d) %d",
            connection_id,
            request.min_c_re,
            request.min_c_im,
@@ -96,12 +96,18 @@ static void on_read(int connection_id, const std::uint8_t* buffer, int len)
            request.image_height,
            request.max_iter);
 
-  // TODO: Check and print time taken to call compute
+  const auto time_begin = std::chrono::steady_clock::now();
   const auto pixels = Mandelbrot::compute(std::complex<double>(request.min_c_re, request.min_c_im),
                                           std::complex<double>(request.max_c_re, request.max_c_im),
                                           request.image_width,
                                           request.image_height,
                                           request.max_iter);
+  const auto time_end = std::chrono::steady_clock::now();
+
+  LOG_INFO("The request from connection %d took %dms (%ds) to compute",
+           connection_id,
+           std::chrono::duration_cast<std::chrono::milliseconds>(time_end - time_begin).count(),
+           std::chrono::duration_cast<std::chrono::seconds>(time_end - time_begin).count());
 
   // Add (move) pixels into the responses map
   responses[connection_id] = std::move(pixels);
@@ -121,6 +127,8 @@ static void on_write(int connection_id)
   }
   else
   {
+    LOG_INFO("Response successfully sent to connection %d", connection_id);
+
     // Restart read procedure to see if the client has more requests
     connections[connection_id]->read();
   }
@@ -140,7 +148,7 @@ static void on_accept(std::unique_ptr<TcpBackend::Connection>&& connection)
   static int next_connection_id = 0;
   const auto connection_id = next_connection_id++;
 
-  LOG_INFO("%s: connection_id=%d", __func__, connection_id);
+  LOG_INFO("Connection %d connected", connection_id);
 
   // Save connection
   connections[connection_id] = std::move(connection);
