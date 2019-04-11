@@ -46,6 +46,16 @@ static void send_request(int session_id)
   session.current_request = request_queue.front();
   request_queue.pop_front();
 
+  LOG_INFO("Session %d sends request (%.2lf, %.2lf)..(%.2lf, %.2lf) (%d, %d) %d",
+           session_id,
+           session.current_request.min_c_re,
+           session.current_request.min_c_im,
+           session.current_request.max_c_re,
+           session.current_request.max_c_im,
+           session.current_request.image_width,
+           session.current_request.image_height,
+           session.current_request.max_iter);
+
   // Send the request
   session.connection->write(reinterpret_cast<const std::uint8_t*>(&session.current_request),
                             sizeof(session.current_request));
@@ -56,7 +66,7 @@ static void send_request(int session_id)
 
 static void on_disconnected(int session_id)
 {
-  LOG_INFO("%s: session_id=%d", __func__, session_id);
+  LOG_INFO("Session %d disconnected", session_id);
 
   const auto& session = sessions[session_id];
   if (session.request_ongoing || !request_queue.empty())
@@ -114,6 +124,8 @@ static void on_read(int session_id, const std::uint8_t* buffer, int len)
     session.connection->read();
     return;
   }
+
+  LOG_INFO("Session %d request completed", session_id);
 
   // Add current_pixels to image_pixels, at the correct position
   // TODO: Simplify this, if possible
@@ -174,7 +186,7 @@ static void on_connected(std::unique_ptr<TcpBackend::Connection>&& connection)
   const auto session_id = next_session_id;
   next_session_id += 1;
 
-  LOG_INFO("%s: session_id=%d", __func__, session_id);
+  LOG_INFO("Session %d connected", session_id);
 
   // Create and store session object
   auto& session = sessions[session_id];
@@ -280,10 +292,7 @@ int main(int argc, char* argv[])
     const auto address = std::get<0>(server);
     const auto port = std::get<1>(server);
 
-    LOG_INFO("%s: creating TCP client to address %s port %s",
-             __func__,
-             address.c_str(),
-             port.c_str());
+    LOG_INFO("Creating TCP client connecting to %s:%s", address.c_str(), port.c_str());
 
     // Create TCP client - if any error occurs just ignore it and continue with next
     // TcpBackend::create_client prints message on error
