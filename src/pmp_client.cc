@@ -195,36 +195,25 @@ int main(int argc, char* argv[])
     return EXIT_FAILURE;
   }
 
-  // Create requests based on options
-  const auto sub_x = arguments.image_width / arguments.divisions;
-  const auto sub_y = arguments.image_height / arguments.divisions;
-  const auto sub_c = (arguments.max_c - arguments.min_c) / static_cast<double>(arguments.divisions);
-
-  // Add first request
-  Protocol::Request request;
-  request.min_c_re     = arguments.min_c.real();
-  request.min_c_im     = arguments.min_c.imag();
-  request.max_c_re     = arguments.min_c.real() + sub_c.real();
-  request.max_c_im     = arguments.min_c.imag() + sub_c.imag();
-  request.image_width  = sub_x;
-  request.image_height = sub_y;
-  request.max_iter     = arguments.max_iter;
-  request_queue.push_back(request);
-
-  // Add rest of the requests
-  for (auto i = 1; i < std::pow(arguments.divisions, 2); i++)
+  // Split image/computation into sub-images and add a request
+  // for each sub-image
+  const auto sub_image_width  = arguments.image_width / arguments.divisions;
+  const auto sub_image_height = arguments.image_height / arguments.divisions;
+  const auto sub_image_c_step = (arguments.max_c - arguments.min_c) / static_cast<double>(arguments.divisions);
+  for (auto y = 0; y < arguments.divisions; y++)
   {
-    request.min_c_re += sub_c.real();
-    request.max_c_re += sub_c.real();
-    if (request.max_c_re > arguments.max_c.real())
+    for (auto x = 0; x < arguments.divisions; x++)
     {
-      // Reset re and increase im
-      request.min_c_re = arguments.min_c.real();
-      request.max_c_re = arguments.min_c.real() + sub_c.real();
-      request.min_c_im += sub_c.imag();
-      request.max_c_im += sub_c.imag();
+      Protocol::Request request;
+      request.min_c_re     = arguments.min_c.real() + (sub_image_c_step.real() * x);
+      request.min_c_im     = arguments.min_c.imag() + (sub_image_c_step.imag() * y);
+      request.max_c_re     = request.min_c_re + sub_image_c_step.real();
+      request.max_c_im     = request.min_c_im + sub_image_c_step.imag();
+      request.image_width  = sub_image_width;
+      request.image_height = sub_image_height;
+      request.max_iter     = arguments.max_iter;
+      request_queue.push_back(request);
     }
-    request_queue.push_back(request);
   }
 
   // Parse list of servers
