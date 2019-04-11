@@ -10,6 +10,7 @@
 #include "tcp_backend.h"
 #include "protocol.h"
 #include "pgm.h"
+#include "logger.h"
 
 static struct Arguments
 {
@@ -55,13 +56,13 @@ static void send_request(int session_id)
 
 static void on_disconnected(int session_id)
 {
-  printf("%s: session_id=%d\n", __func__, session_id);
+  LOG_INFO("%s: session_id=%d", __func__, session_id);
 
   const auto& session = sessions[session_id];
   if (session.request_ongoing || !request_queue.empty())
   {
     // Something is wrong, the connection shouldn't disconnect now...
-    fprintf(stderr, "unexpected disconnect\n");
+    LOG_ERROR("Unexpected disconnect!");
 
     // TODO: Try to recover?
     exit(EXIT_FAILURE);
@@ -73,11 +74,12 @@ static void on_disconnected(int session_id)
   // If this was the last session to be closed then we can write the image and we're done!
   if (sessions.empty())
   {
-    printf("%s: no more requests and no more sessions, writing image\n", __func__);
-    PGM::write_pgm("test.pgm", arguments.image_width, arguments.image_height, image_pixels.data());
+    static const auto filename = std::string("image.pgm");
+    LOG_INFO("No more requests and no more sessions, writing image to \"%s\"", filename.c_str());
+    PGM::write_pgm(filename, arguments.image_width, arguments.image_height, image_pixels.data());
 
     // The program will exit automatically since no async tasks _should_ be active after
-    // this call, so the network backend should stop
+    // this call, so the network backend should stop and return to main() where we'll exit
   }
 }
 
@@ -85,14 +87,12 @@ static void on_read(int session_id, const std::uint8_t* buffer, int len)
 {
   auto& session = sessions[session_id];
 
-#ifdef DEBUG_PRINT
-  printf("%s: session_id=%d len=%d\n", __func__, session_id, len);
-#endif
+  LOG_DEBUG("%s: session_id=%d len=%d", __func__, session_id, len);
 
   Protocol::Response response;
   if (len != sizeof(response))
   {
-    fprintf(stderr, "Unexpected data length (received=%d expected=%d)\n", len, static_cast<int>(sizeof(response)));
+    LOG_ERROR("Unexpected data length (received=%d expected=%d)", len, static_cast<int>(sizeof(response)));
 
     // TODO: Try to recover?
     exit(EXIT_FAILURE);
@@ -100,12 +100,10 @@ static void on_read(int session_id, const std::uint8_t* buffer, int len)
 
   std::copy(buffer, buffer + len, reinterpret_cast<std::uint8_t*>(&response));
 
-#ifdef DEBUG_PRINT
-  printf("%s: response: num_pixels=%d last_message=%d\n",
-         __func__,
-         response.num_pixels,
-         response.last_message);
-#endif
+  LOG_DEBUG("%s: response: num_pixels=%d last_message=%d",
+            __func__,
+            response.num_pixels,
+            response.last_message);
 
   // Add the pixels we received
   session.current_pixels.insert(session.current_pixels.end(), response.pixels, response.pixels + response.num_pixels);
@@ -150,16 +148,12 @@ static void on_read(int session_id, const std::uint8_t* buffer, int len)
 
 static void on_write(int session_id)
 {
-#ifdef DEBUG_PRINT
-  printf("%s: session_id=%d\n", __func__, session_id);
-#else
-  (void)session_id;
-#endif
+  LOG_DEBUG("%s: session_id=%d", __func__, session_id);
 }
 
 static void on_error_connection(int session_id, const std::string& message)
 {
-  fprintf(stderr, "%s: session_id=%d message=%s\n", __func__, session_id, message.c_str());
+  LOG_ERROR("%s: session_id=%d message=%s", __func__, session_id, message.c_str());
 
   // TODO: Try to recover?
   exit(EXIT_FAILURE);
@@ -167,7 +161,7 @@ static void on_error_connection(int session_id, const std::string& message)
 
 static void on_error_client(const std::string& message)
 {
-  fprintf(stderr, "%s: message=%s\n", __func__, message.c_str());
+  LOG_ERROR("%s: message=%s", __func__, message.c_str());
 
   // TODO: Try to recover?
   exit(EXIT_FAILURE);
@@ -180,7 +174,7 @@ static void on_connected(std::unique_ptr<TcpBackend::Connection>&& connection)
   const auto session_id = next_session_id;
   next_session_id += 1;
 
-  printf("%s: session_id=%d\n", __func__, session_id);
+  LOG_INFO("%s: session_id=%d", __func__, session_id);
 
   // Create and store session object
   auto& session = sessions[session_id];
@@ -229,7 +223,7 @@ int main(int argc, char* argv[])
   }
   catch (const std::exception& e)
   {
-    fprintf(stderr, "%s\n", e.what());
+    fprintf(stderr, "exception: %s\n", e.what());
     fprintf(stderr,
             "usage: %s min_c_re min_c_im max_c_re max_c_im max_n x y divisions list-of-servers\n",
             argv[0]);
@@ -286,7 +280,10 @@ int main(int argc, char* argv[])
     const auto address = std::get<0>(server);
     const auto port = std::get<1>(server);
 
-    printf("Creating TCP client to address %s port %s\n", address.c_str(), port.c_str());
+    LOG_INFO("%s: creating TCP client to address %s port %s",
+             __func__,
+             address.c_str(),
+             port.c_str());
 
     // Create TCP client - if any error occurs just ignore it and continue with next
     // TcpBackend::create_client prints message on error
@@ -300,7 +297,7 @@ int main(int argc, char* argv[])
   // If no TCP clients could be created then we have to abort
   if (clients.empty())
   {
-    fprintf(stderr, "No TCP client could be created\n");
+    LOG_ERROR("%s: no TCP client could be created", __func__);
     return EXIT_FAILURE;
   }
 

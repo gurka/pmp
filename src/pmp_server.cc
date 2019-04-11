@@ -10,6 +10,7 @@
 #include "tcp_backend.h"
 #include "protocol.h"
 #include "mandelbrot.h"
+#include "logger.h"
 
 static std::unique_ptr<TcpBackend::Server> server;
 static std::unordered_map<int, std::unique_ptr<TcpBackend::Connection>> connections;
@@ -19,7 +20,7 @@ static void send_response(int connection_id)
 {
   if (responses.count(connection_id) == 0)
   {
-    fprintf(stderr, "%s: error: no pixels found for connection_id=%d\n", __func__, connection_id);
+    LOG_ERROR("%s: error: no pixels found for connection_id=%d", __func__, connection_id);
     return;
   }
 
@@ -55,7 +56,7 @@ static void send_response(int connection_id)
 
 static void on_disconnected(int connection_id)
 {
-  printf("%s: connection_id=%d\n", __func__, connection_id);
+  LOG_INFO("%s: connection_id=%d", __func__, connection_id);
 
   // Delete the connection
   connections.erase(connection_id);
@@ -64,7 +65,7 @@ static void on_disconnected(int connection_id)
   // we have to abort
   if (responses.count(connection_id) == 1)
   {
-    fprintf(stderr, "%s: unexpected disconnect, response not sent\n", __func__);
+    LOG_ERROR("%s: unexpected disconnect, response not sent", __func__);
 
     // TODO: try to recover instead of just aborting
     exit(EXIT_FAILURE);
@@ -76,7 +77,7 @@ static void on_read(int connection_id, const std::uint8_t* buffer, int len)
   Protocol::Request request;
   if (len != sizeof(request))
   {
-    fprintf(stderr, "Unexpected data length (received=%d expected=%d)\n", len, static_cast<int>(sizeof(request)));
+    LOG_ERROR("%s: unexpected data length (received=%d expected=%d)", __func__, len, static_cast<int>(sizeof(request)));
 
     // TODO: try to recover instead of just aborting
     exit(EXIT_FAILURE);
@@ -84,16 +85,16 @@ static void on_read(int connection_id, const std::uint8_t* buffer, int len)
 
   std::copy(buffer, buffer + len, reinterpret_cast<std::uint8_t*>(&request));
 
-  printf("%s: connection_id=%d request: min_c_re=%f min_c_im=%f max_c_re=%f max_c_im=%f image_width=%d image_height=%d max_iter=%d\n",
-         __func__,
-         connection_id,
-         request.min_c_re,
-         request.min_c_im,
-         request.max_c_re,
-         request.max_c_im,
-         request.image_width,
-         request.image_height,
-         request.max_iter);
+  LOG_INFO("%s: connection_id=%d request: min_c_re=%f min_c_im=%f max_c_re=%f max_c_im=%f image_width=%d image_height=%d max_iter=%d",
+           __func__,
+           connection_id,
+           request.min_c_re,
+           request.min_c_im,
+           request.max_c_re,
+           request.max_c_im,
+           request.image_width,
+           request.image_height,
+           request.max_iter);
 
   // TODO: Check and print time taken to call compute
   const auto pixels = Mandelbrot::compute(std::complex<double>(request.min_c_re, request.min_c_im),
@@ -111,9 +112,7 @@ static void on_read(int connection_id, const std::uint8_t* buffer, int len)
 
 static void on_write(int connection_id)
 {
-#ifdef DEBUG_PRINT
-  printf("%s: connection_id=%d\n", __func__, connection_id);
-#endif
+  LOG_DEBUG("%s: connection_id=%d", __func__, connection_id);
 
   // Check if there are more pixels to send
   if (responses.count(connection_id) == 1)
@@ -129,7 +128,7 @@ static void on_write(int connection_id)
 
 static void on_error(int connection_id, const std::string& message)
 {
-  fprintf(stderr, "%s: connection_id=%d message=%s\n", __func__, connection_id, message.c_str());
+  LOG_ERROR("%s: connection_id=%d message=%s", __func__, connection_id, message.c_str());
 
   // TODO: try to recover instead of just aborting
   exit(EXIT_FAILURE);
@@ -141,7 +140,7 @@ static void on_accept(std::unique_ptr<TcpBackend::Connection>&& connection)
   static int next_connection_id = 0;
   const auto connection_id = next_connection_id++;
 
-  printf("%s: connection_id=%d\n", __func__, connection_id);
+  LOG_INFO("%s: connection_id=%d", __func__, connection_id);
 
   // Save connection
   connections[connection_id] = std::move(connection);
@@ -175,7 +174,7 @@ int main(int argc, char* argv[])
   }
   catch (const std::exception& e)
   {
-    fprintf(stderr, "%s\n", e.what());
+    fprintf(stderr, "exception: %s\n", e.what());
     fprintf(stderr, "usage: %s PORT\n", argv[0]);
     return EXIT_FAILURE;
   }
@@ -199,7 +198,7 @@ int main(int argc, char* argv[])
     return EXIT_FAILURE;
   }
 
-  printf("Using port: %d\n", port);
+  LOG_INFO("Listening on port: %d", port);
 
   // Create and start TCP server
   server = TcpBackend::create_server(port, on_accept);
