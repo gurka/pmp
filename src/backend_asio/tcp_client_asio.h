@@ -22,6 +22,8 @@ class ClientAsio : public Client
  private:
   asio::ip::tcp::socket m_socket;
   asio::ip::tcp::resolver::iterator m_endpoint_iterator;
+  std::string m_address;
+  std::string m_port;
   OnConnected m_on_connected;
   OnError m_on_error;
 };

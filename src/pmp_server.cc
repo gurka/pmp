@@ -217,9 +217,9 @@ int main(int argc, char* argv[])
   }
   server->accept();
 
-  // Start network backend
-  // It will run forever
-  // TODO: catch ^C and break
+  // Start network backend, it will run until there are no more
+  // active async tasks
+  // TODO: catch ^C and quit gracefully
   TcpBackend::run();
 
   return EXIT_SUCCESS;

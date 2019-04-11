@@ -49,9 +49,12 @@ using OnError = std::function<void(const std::string& message)>;
  * Called by Client when it has connected
  *
  * @param[in]  connection  The Connection that represents the connection
+ * @param[in]  address     Address that the Connection is connected to
+ * @param[in]  port        Port that the Connection is connected to
  */
-// TODO: Add address & port parameters, so it's possible to map Connection back to a Server?
-using OnConnected = std::function<void(std::unique_ptr<Connection>&& connection)>;
+using OnConnected = std::function<void(std::unique_ptr<Connection>&& connection,
+                                       const std::string& address,
+                                       const std::string& port)>;
 
 /**
  * @brief OnDisconnected callback

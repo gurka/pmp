@@ -180,14 +180,16 @@ static void on_error_client(const std::string& message)
   exit(EXIT_FAILURE);
 }
 
-static void on_connected(std::unique_ptr<TcpBackend::Connection>&& connection)
+static void on_connected(std::unique_ptr<TcpBackend::Connection>&& connection,
+                         const std::string& address,
+                         const std::string& port)
 {
   // One unique id per session/connection
   static int next_session_id = 0;
   const auto session_id = next_session_id;
   next_session_id += 1;
 
-  LOG_INFO("Session %d connected", session_id);
+  LOG_INFO("Session %d connected to %s:%s", session_id, address.c_str(), port.c_str());
 
   // Create and store session object
   auto& session = sessions[session_id];
