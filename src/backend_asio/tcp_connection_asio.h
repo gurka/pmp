@@ -16,15 +16,16 @@ class ConnectionAsio : public Connection
  public:
   ConnectionAsio(asio::ip::tcp::socket socket);
 
-  void start(const OnRead& on_read,
-             const OnWrite& on_write,
-             const OnError& on_error) override;
+  void set_callbacks(const OnDisconnected& on_disconnected,
+                     const OnRead& on_read,
+                     const OnWrite& on_write,
+                     const OnError& on_error) override;
+  void read() override;
   void write(const std::uint8_t* buffer, int len) override;
   void close() override;
 
  private:
-  void async_read_header();
-  void async_read_data(int data_len);
+  void read_data(int data_len);
 
   asio::ip::tcp::socket m_socket;
 
@@ -44,13 +45,17 @@ class ConnectionAsio : public Connection
   // reads the header and then the message data while the
   // write buffer must be able to contain the whole message.
   // This is the reason for the size difference.
-  std::array<std::uint8_t, (1 << 16) - 1> m_read_buffer;
+  std::array<std::uint8_t, (1 << 16) - 1>     m_read_buffer;
   std::array<std::uint8_t, (1 << 16) - 1 + 2> m_write_buffer;
-  bool m_write_ongoing;
 
-  OnRead m_on_read;
-  OnWrite m_on_write;
-  OnError m_on_error;
+  bool m_read_ongoing;
+  bool m_write_ongoing;
+  bool m_closing;
+
+  OnDisconnected m_on_disconnected;
+  OnRead         m_on_read;
+  OnWrite        m_on_write;
+  OnError        m_on_error;
 };
 
 }

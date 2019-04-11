@@ -24,17 +24,15 @@ class Server;
  *
  * @param[in]  data  Pointer to data
  * @param[in]  len   Length of data
- *
- * @return true if the Connection should continue to read data, otherwise false
  */
-using OnRead      = std::function<bool(const std::uint8_t* data, int len)>;
+using OnRead = std::function<void(const std::uint8_t* data, int len)>;
 
 /**
  * @brief OnWrite callback
  *
  * Called when the Connection has written queued data
  */
-using OnWrite     = std::function<void(void)>;
+using OnWrite = std::function<void(void)>;
 
 /**
  * @brief OnError callback
@@ -43,7 +41,7 @@ using OnWrite     = std::function<void(void)>;
  *
  * @param[in]  message  The error message
  */
-using OnError     = std::function<void(const std::string& message)>;
+using OnError = std::function<void(const std::string& message)>;
 
 /**
  * @brief OnConnected callback
@@ -53,6 +51,19 @@ using OnError     = std::function<void(const std::string& message)>;
  * @param[in]  connection  The Connection that represents the connection
  */
 using OnConnected = std::function<void(std::unique_ptr<Connection>&& connection)>;
+
+/**
+ * @brief OnDisconnected callback
+ *
+ * Called by Connection when the connection has closed and no more
+ * async tasks are ongoing.
+ *
+ * The Connection instance may only be deleted when this callback
+ * has been called.
+ *
+ * See @Connection for more information.
+ */
+using OnDisconnected = std::function<void(void)>;
 
 /**
  * @brief OnAccept callback
@@ -112,20 +123,31 @@ class Connection
   virtual ~Connection() = default;
 
   /**
-   * @brief Starts the connection
+   * @brief Set callbacks
    *
-   * Callbacks are saved and the read procedure is started
+   * These callbacks must be set before any read or write
+   * procedures are started.
    *
-   * @param[in]  on_read   OnRead callback, see @OnRead
-   * @param[in]  on_write  OnWrite callback, see @OnWrite
-   * @param[in]  on_error  OnError callback, see @OnError
+   * @param[in]  on_disconnected  OnDisconnected callback, see @OnDisconnected
+   * @param[in]  on_read          OnRead callback, see @OnRead
+   * @param[in]  on_write         OnWrite callback, see @OnWrite
+   * @param[in]  on_error         OnError callback, see @OnError
    */
-  virtual void start(const OnRead& on_read,
-                     const OnWrite& on_write,
-                     const OnError& on_error) = 0;
+  virtual void set_callbacks(const OnDisconnected& on_disconnected,
+                             const OnRead& on_read,
+                             const OnWrite& on_write,
+                             const OnError& on_error) = 0;
 
   /**
-   * @brief Send data to the connection (async)
+   * @brief Starts read procedure (async)
+   *
+   * The OnRead callback will be called when data has
+   * been read.
+   */
+  virtual void read() = 0;
+
+  /**
+   * @brief Starts write procedure (async)
    *
    * @param[in]  buffer  The data to send
    * @param[in]  len     Length of data
@@ -135,8 +157,11 @@ class Connection
   /**
    * @brief Closes the connection
    *
-   * Any ongoing async tasks will be aborted and the OnError
-   * callback will be called for those tasks
+   * Any ongoing async tasks will be aborted and the OnDisconnected
+   * callback will be called either in this context or in a later context.
+   *
+   * The Connection instance may only be deleted when the OnDisconnected
+   * callback has been called.
    */
   virtual void close() = 0;
 };
@@ -161,6 +186,11 @@ class Server
 {
  public:
   virtual ~Server() = default;
+
+  /**
+   * @brief Start accept procedure (async)
+   */
+  virtual void accept() = 0;
 };
 
 }

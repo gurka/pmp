@@ -27,6 +27,7 @@ static std::vector<std::uint8_t> image_pixels;
 struct Session
 {
   std::unique_ptr<TcpBackend::Connection> connection;
+  bool request_ongoing;
   Protocol::Request current_request;
   std::vector<std::uint8_t> current_pixels;
 };
@@ -36,39 +37,75 @@ static void send_request(int session_id)
 {
   auto& session = sessions[session_id];
 
+  // Make sure to clear ongoing_pixels
+  session.request_ongoing = true;
+  session.current_pixels.clear();
+
   // Fetch and remove next request from queue
   session.current_request = request_queue.front();
   request_queue.pop_front();
 
-  // Make sure to clear ongoing_pixels
-  session.current_pixels.clear();
-
-  // And send it
+  // Send the request
   session.connection->write(reinterpret_cast<const std::uint8_t*>(&session.current_request),
                             sizeof(session.current_request));
+
+  // And start reading response messages
+  session.connection->read();
 }
 
-static bool on_read(int session_id, const std::uint8_t* buffer, int len)
+static void on_disconnected(int session_id)
+{
+  printf("%s: session_id=%d\n", __func__, session_id);
+
+  const auto& session = sessions[session_id];
+  if (session.request_ongoing || !request_queue.empty())
+  {
+    // Something is wrong, the connection shouldn't disconnect now...
+    fprintf(stderr, "unexpected disconnect\n");
+
+    // TODO: Try to recover?
+    exit(EXIT_FAILURE);
+  }
+
+  // Delete the session
+  sessions.erase(session_id);
+
+  // If this was the last session to be closed then we can write the image and we're done!
+  if (sessions.empty())
+  {
+    printf("%s: no more requests and no more sessions, writing image\n", __func__);
+    PGM::write_pgm("test.pgm", arguments.image_width, arguments.image_height, image_pixels.data());
+
+    // The program will exit automatically since no async tasks _should_ be active after
+    // this call, so the network backend should stop
+  }
+}
+
+static void on_read(int session_id, const std::uint8_t* buffer, int len)
 {
   auto& session = sessions[session_id];
 
+#ifdef DEBUG_PRINT
   printf("%s: session_id=%d len=%d\n", __func__, session_id, len);
+#endif
 
   Protocol::Response response;
   if (len != sizeof(response))
   {
     fprintf(stderr, "Unexpected data length (received=%d expected=%d)\n", len, static_cast<int>(sizeof(response)));
 
-    // Unrecoverable... for now
+    // TODO: Try to recover?
     exit(EXIT_FAILURE);
   }
 
   std::copy(buffer, buffer + len, reinterpret_cast<std::uint8_t*>(&response));
 
+#ifdef DEBUG_PRINT
   printf("%s: response: num_pixels=%d last_message=%d\n",
          __func__,
          response.num_pixels,
          response.last_message);
+#endif
 
   // Add the pixels we received
   session.current_pixels.insert(session.current_pixels.end(), response.pixels, response.pixels + response.num_pixels);
@@ -76,7 +113,8 @@ static bool on_read(int session_id, const std::uint8_t* buffer, int len)
   if (response.last_message == 0)
   {
     // Read more messages
-    return true;
+    session.connection->read();
+    return;
   }
 
   // Add current_pixels to image_pixels, at the correct position
@@ -95,43 +133,44 @@ static bool on_read(int session_id, const std::uint8_t* buffer, int len)
     to += arguments.image_width;
   }
 
+  // Current request is done
+  session.request_ongoing = false;
+
   // Check if there are more requests to handle
   if (!request_queue.empty())
   {
-    // Handle next request and continue to read messages
+    // Handle next request
     send_request(session_id);
-    return true;
+    return;
   }
 
   // Close connection
   sessions[session_id].connection->close();
-  sessions.erase(session_id);
-
-  // If this was the last session to be closed then we can write the image and we're done!
-  if (sessions.empty())
-  {
-    printf("%s: no more requests and no more sessions, writing image\n", __func__);
-    PGM::write_pgm("test.pgm", arguments.image_width, arguments.image_height, image_pixels.data());
-  }
-
-  return false;
 }
 
 static void on_write(int session_id)
 {
+#ifdef DEBUG_PRINT
   printf("%s: session_id=%d\n", __func__, session_id);
+#else
+  (void)session_id;
+#endif
 }
 
 static void on_error_connection(int session_id, const std::string& message)
 {
   fprintf(stderr, "%s: session_id=%d message=%s\n", __func__, session_id, message.c_str());
-  sessions[session_id].connection->close();
-  sessions.erase(session_id);
+
+  // TODO: Try to recover?
+  exit(EXIT_FAILURE);
 }
 
 static void on_error_client(const std::string& message)
 {
   fprintf(stderr, "%s: message=%s\n", __func__, message.c_str());
+
+  // TODO: Try to recover?
+  exit(EXIT_FAILURE);
 }
 
 static void on_connected(std::unique_ptr<TcpBackend::Connection>&& connection)
@@ -146,26 +185,19 @@ static void on_connected(std::unique_ptr<TcpBackend::Connection>&& connection)
   // Create and store session object
   auto& session = sessions[session_id];
   session.connection = std::move(connection);
+  session.request_ongoing = false;
 
   // Create callbacks
   // These are just wrappers for on_read/on_write/on_error_connection
   // but with session_id captured, so that we can differentiate the
   // session in the callback functions
-  auto read = [session_id](const std::uint8_t* buffer, int len)
-  {
-    return on_read(session_id, buffer, len);
-  };
-  auto write = [session_id]()
-  {
-    on_write(session_id);
-  };
-  auto error = [session_id](const std::string& message)
-  {
-    on_error_connection(session_id, message);
-  };
+  auto disconnected = [session_id]()                                    { on_disconnected(session_id);              };
+  auto read         = [session_id](const std::uint8_t* buffer, int len) { on_read(session_id, buffer, len);         };
+  auto write        = [session_id]()                                    { on_write(session_id);                     };
+  auto error        = [session_id](const std::string& message)          { on_error_connection(session_id, message); };
 
   // Set callbacks and start the read procedure
-  sessions[session_id].connection->start(read, write, error);
+  sessions[session_id].connection->set_callbacks(disconnected, read, write, error);
 
   // Send next request in queue to this session
   send_request(session_id);

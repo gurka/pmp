@@ -11,9 +11,9 @@
 #include "protocol.h"
 #include "mandelbrot.h"
 
+static std::unique_ptr<TcpBackend::Server> server;
 static std::unordered_map<int, std::unique_ptr<TcpBackend::Connection>> connections;
 static std::unordered_map<int, std::vector<std::uint8_t>> responses;
-static int next_connection_id = 0;
 
 static void send_response(int connection_id)
 {
@@ -53,15 +53,33 @@ static void send_response(int connection_id)
   connections[connection_id]->write(reinterpret_cast<const std::uint8_t*>(&response), sizeof(response));
 }
 
-static bool on_read(int connection_id, const std::uint8_t* buffer, int len)
+static void on_disconnected(int connection_id)
+{
+  printf("%s: connection_id=%d\n", __func__, connection_id);
+
+  // Delete the connection
+  connections.erase(connection_id);
+
+  // If the client disconnected unexpectedly (response still in queue) then
+  // we have to abort
+  if (responses.count(connection_id) == 1)
+  {
+    fprintf(stderr, "%s: unexpected disconnect, response not sent\n", __func__);
+
+    // TODO: try to recover instead of just aborting
+    exit(EXIT_FAILURE);
+  }
+}
+
+static void on_read(int connection_id, const std::uint8_t* buffer, int len)
 {
   Protocol::Request request;
   if (len != sizeof(request))
   {
     fprintf(stderr, "Unexpected data length (received=%d expected=%d)\n", len, static_cast<int>(sizeof(request)));
-    connections[connection_id]->close();
-    connections.erase(connection_id);
-    return false;
+
+    // TODO: try to recover instead of just aborting
+    exit(EXIT_FAILURE);
   }
 
   std::copy(buffer, buffer + len, reinterpret_cast<std::uint8_t*>(&request));
@@ -89,41 +107,57 @@ static bool on_read(int connection_id, const std::uint8_t* buffer, int len)
 
   // Start sending response back to client
   send_response(connection_id);
-
-  // Return true to tell TcpConnection to continue to read data
-  return true;
 }
 
 static void on_write(int connection_id)
 {
+#ifdef DEBUG_PRINT
   printf("%s: connection_id=%d\n", __func__, connection_id);
+#endif
 
+  // Check if there are more pixels to send
   if (responses.count(connection_id) == 1)
   {
-    // There are more pixels to send
     send_response(connection_id);
+  }
+  else
+  {
+    // Restart read procedure to see if the client has more requests
+    connections[connection_id]->read();
   }
 }
 
 static void on_error(int connection_id, const std::string& message)
 {
-  printf("%s: connection_id=%d message=%s\n", __func__, connection_id, message.c_str());
-  connections[connection_id]->close();
-  connections.erase(connection_id);
+  fprintf(stderr, "%s: connection_id=%d message=%s\n", __func__, connection_id, message.c_str());
+
+  // TODO: try to recover instead of just aborting
+  exit(EXIT_FAILURE);
 }
 
 static void on_accept(std::unique_ptr<TcpBackend::Connection>&& connection)
 {
-  // Save connection
+  // Unique id per connection
+  static int next_connection_id = 0;
   const auto connection_id = next_connection_id++;
-  connections[connection_id] = std::move(connection);
+
   printf("%s: connection_id=%d\n", __func__, connection_id);
 
-  // and start it with callbacks to on_read, on_write and on_error
-  const auto read  = [connection_id](const std::uint8_t* buffer, int len) { return on_read(connection_id, buffer, len); };
-  const auto write = [connection_id]()                                    { on_write(connection_id);                    };
-  const auto error = [connection_id](const std::string& message)          { on_error(connection_id, message);           };
-  connections[connection_id]->start(read, write, error);
+  // Save connection
+  connections[connection_id] = std::move(connection);
+
+  // Set callbacks
+  const auto disconnected  = [connection_id]()                                    { on_disconnected(connection_id);      };
+  const auto read          = [connection_id](const std::uint8_t* buffer, int len) { on_read(connection_id, buffer, len); };
+  const auto write         = [connection_id]()                                    { on_write(connection_id);             };
+  const auto error         = [connection_id](const std::string& message)          { on_error(connection_id, message);    };
+  connections[connection_id]->set_callbacks(disconnected, read, write, error);
+
+  // Start read procedure
+  connections[connection_id]->read();
+
+  // Continue to accept new connections
+  server->accept();
 }
 
 int main(int argc, char* argv[])
@@ -167,13 +201,14 @@ int main(int argc, char* argv[])
 
   printf("Using port: %d\n", port);
 
-  // Create TCP server
-  auto tcp_server = TcpBackend::create_server(port, on_accept);
-  if (!tcp_server)
+  // Create and start TCP server
+  server = TcpBackend::create_server(port, on_accept);
+  if (!server)
   {
-    // Error message printed by TcpServer::create
+    // Error message printed by TcpBackend::create_server
     return EXIT_FAILURE;
   }
+  server->accept();
 
   // Start network backend
   // It will run forever

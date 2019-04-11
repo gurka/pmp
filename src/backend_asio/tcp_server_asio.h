@@ -14,12 +14,12 @@ class ServerAsio : public Server
 {
  public:
   ServerAsio(asio::io_service* io_service,
-              std::uint16_t port,
-              const OnAccept& on_accept);
+             std::uint16_t port,
+             const OnAccept& on_accept);
+
+  void accept() override;
 
  private:
-  void async_accept();
-
   asio::ip::tcp::acceptor m_acceptor;
   asio::ip::tcp::socket m_socket;
   OnAccept m_on_accept;
