@@ -49,10 +49,10 @@ static void send_request(int session_id)
 
   LOG_INFO("Session %d sends request (%.2lf, %.2lf)..(%.2lf, %.2lf) (%d, %d) %d",
            session_id,
-           session.current_request.min_c_re,
-           session.current_request.min_c_im,
-           session.current_request.max_c_re,
-           session.current_request.max_c_im,
+           session.current_request.min_c.real(),
+           session.current_request.min_c.imag(),
+           session.current_request.max_c.real(),
+           session.current_request.max_c.imag(),
            session.current_request.image_width,
            session.current_request.image_height,
            session.current_request.max_iter);
@@ -101,23 +101,21 @@ static void on_read(int session_id, const std::uint8_t* buffer, int len)
   LOG_DEBUG("%s: session_id=%d len=%d", __func__, session_id, len);
 
   Protocol::Response response;
-  if (len != sizeof(response))
+  if (!Protocol::deserialize(std::vector<std::uint8_t>(buffer, buffer + len), &response))
   {
-    LOG_ERROR("Unexpected data length (received=%d expected=%d)", len, static_cast<int>(sizeof(response)));
+    LOG_ERROR("%s: could not deserialize Response message", __func__);
 
     // TODO: Try to recover?
     exit(EXIT_FAILURE);
   }
 
-  std::copy(buffer, buffer + len, reinterpret_cast<std::uint8_t*>(&response));
-
-  LOG_DEBUG("%s: response: num_pixels=%d last_message=%d",
+  LOG_DEBUG("%s: response: num_pixels=%d last_message=%s",
             __func__,
-            response.num_pixels,
-            response.last_message);
+            static_cast<int>(response.pixels.size()),
+            (response.last_message ? "true" : "false"));
 
   // Add the pixels we received
-  session.current_pixels.insert(session.current_pixels.end(), response.pixels, response.pixels + response.num_pixels);
+  session.current_pixels.insert(session.current_pixels.end(), response.pixels.begin(), response.pixels.end());
 
   if (response.last_message == 0)
   {
@@ -131,13 +129,13 @@ static void on_read(int session_id, const std::uint8_t* buffer, int len)
   // Add current_pixels to image_pixels, at the correct position
   // TODO: Simplify this, if possible
   const auto sub_c = (arguments.max_c - arguments.min_c) / static_cast<double>(arguments.divisions);
-  const auto dx = (session.current_request.min_c_re - arguments.min_c.real()) / sub_c.real();
-  const auto dy = (session.current_request.min_c_im - arguments.min_c.imag()) / sub_c.imag();
+  const auto dx = ((session.current_request.min_c - arguments.min_c) / sub_c.real()).real();
+  const auto dy = ((session.current_request.min_c - arguments.min_c) / sub_c.imag()).imag();
   auto to = image_pixels.begin() +
             (session.current_request.image_height * dy * arguments.image_width) +
             (session.current_request.image_width * dx);
   auto from = session.current_pixels.begin();
-  for (auto y = 0; y < session.current_request.image_height; y++)
+  for (auto y = 0u; y < session.current_request.image_height; y++)
   {
     std::copy(from, from + session.current_request.image_width, to);
     from += session.current_request.image_width;
@@ -274,10 +272,9 @@ int main(int argc, char* argv[])
     for (auto x = 0; x < arguments.divisions; x++)
     {
       Protocol::Request request;
-      request.min_c_re     = arguments.min_c.real() + (sub_image_c_step.real() * x);
-      request.min_c_im     = arguments.min_c.imag() + (sub_image_c_step.imag() * y);
-      request.max_c_re     = request.min_c_re + sub_image_c_step.real();
-      request.max_c_im     = request.min_c_im + sub_image_c_step.imag();
+      request.min_c        = arguments.min_c + std::complex<double>(sub_image_c_step.real() * x,
+                                                                    sub_image_c_step.imag() * y);
+      request.max_c        = request.min_c + sub_image_c_step;
       request.image_width  = sub_image_width;
       request.image_height = sub_image_height;
       request.max_iter     = arguments.max_iter;

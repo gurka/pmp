@@ -8,19 +8,21 @@ LDFLAGS  = -lpthread
 .PHONY: clean
 
 # Source code
-SOURCE_SERVER = src/pmp_server.cc src/logger.cc src/mandelbrot.cc
-SOURCE_CLIENT = src/pmp_client.cc src/logger.cc src/pgm.cc
+SOURCE_SERVER = src/pmp_server.cc src/protocol.cc src/logger.cc src/mandelbrot.cc
+SOURCE_CLIENT = src/pmp_client.cc src/protocol.cc src/logger.cc src/pgm.cc
 SOURCE_EPOLL  = $(wildcard src/backend_epoll/*.cc)
 SOURCE_ASIO   = $(wildcard src/backend_asio/*.cc)
 
 # Targets
-all:
-	@echo "Use target epoll or target asio"
+all: asio
 
-epoll: bin/epoll/pmp_server bin/epoll/pmp_client
+debug: CXXFLAGS += -O0 -g
+debug: all
 
 asio: CXXFLAGS += -isystem external/asio/asio/include
 asio: bin/asio/pmp_server bin/asio/pmp_client
+
+epoll: bin/epoll/pmp_server bin/epoll/pmp_client
 
 dir_guard = @mkdir -p $(@D)
 

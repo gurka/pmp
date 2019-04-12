@@ -28,31 +28,35 @@ static void send_response(int connection_id)
   // Get pixels
   auto& pixels = responses[connection_id];
 
-  // Check if there is enough room to send rest of the pixels in one response message
+  // Maximum size of byte array (pixels) in messages is 2^15 = 32768
+  // so we need to split the response into multiple messages if we have
+  // more pixels than that
   Protocol::Response response;
-  if (pixels.size() <= sizeof(response.pixels))
+  if (pixels.size() <= (1u << 15))
   {
-    // Send rest of pixels
-    std::copy(pixels.begin(), pixels.end(), response.pixels);
-    response.num_pixels = pixels.size();
-    response.last_message = 1;
+    // We can send all pixels in this message
+    // Serialize and send the message
+    response.pixels = responses[connection_id];
+    response.last_message = true;
+    const auto buffer = Protocol::serialize(response);
+    connections[connection_id]->write(buffer.data(), buffer.size());
 
-    // Erase response from map
+    // Erase the response/pixels
     responses.erase(connection_id);
   }
   else
   {
-    // Send as many pixels as we can
-    std::copy(pixels.begin(), pixels.begin() + sizeof(response.pixels), response.pixels);
-    response.num_pixels = sizeof(response.pixels);
-    response.last_message = 0;
+    // Send as many pixels as possible (2^15)
+    response.pixels.insert(response.pixels.end(),
+                           pixels.begin(),
+                           pixels.begin() + (1u << 15));
+    response.last_message = false;
+    const auto buffer = Protocol::serialize(response);
+    connections[connection_id]->write(buffer.data(), buffer.size());
 
     // Erase the pixels we sent from the vector
-    pixels.erase(pixels.begin(), pixels.begin() + sizeof(response.pixels));
+    pixels.erase(pixels.begin(), pixels.begin() + (1u << 15));
   }
-
-  // Send the Response
-  connections[connection_id]->write(reinterpret_cast<const std::uint8_t*>(&response), sizeof(response));
 }
 
 static void on_disconnected(int connection_id)
@@ -76,29 +80,27 @@ static void on_disconnected(int connection_id)
 static void on_read(int connection_id, const std::uint8_t* buffer, int len)
 {
   Protocol::Request request;
-  if (len != sizeof(request))
+  if (!Protocol::deserialize(std::vector<std::uint8_t>(buffer, buffer + len), &request))
   {
-    LOG_ERROR("%s: unexpected data length (received=%d expected=%d)", __func__, len, static_cast<int>(sizeof(request)));
+    LOG_ERROR("%s: could not deseralize Request message", __func__);
 
     // TODO: try to recover instead of just aborting
     exit(EXIT_FAILURE);
   }
 
-  std::copy(buffer, buffer + len, reinterpret_cast<std::uint8_t*>(&request));
-
   LOG_INFO("Received request from connection %d: (%.2lf, %.2lf)..(%.2lf, %.2lf) (%d, %d) %d",
            connection_id,
-           request.min_c_re,
-           request.min_c_im,
-           request.max_c_re,
-           request.max_c_im,
+           request.min_c.real(),
+           request.min_c.imag(),
+           request.max_c.real(),
+           request.max_c.imag(),
            request.image_width,
            request.image_height,
            request.max_iter);
 
   const auto time_begin = std::chrono::steady_clock::now();
-  const auto pixels = Mandelbrot::compute(std::complex<double>(request.min_c_re, request.min_c_im),
-                                          std::complex<double>(request.max_c_re, request.max_c_im),
+  const auto pixels = Mandelbrot::compute(request.min_c,
+                                          request.max_c,
                                           request.image_width,
                                           request.image_height,
                                           request.max_iter);
