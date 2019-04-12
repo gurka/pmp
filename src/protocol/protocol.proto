@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+message Request {
+  double min_c_re     = 1;
+  double min_c_im     = 2;
+  double max_c_re     = 3;
+  double max_c_im     = 4;
+  int32  image_width  = 5;
+  int32  image_height = 6;
+  int32  max_iter     = 7;
+}
+
+message Response {
+  bytes pixels       = 1;
+  bool  last_message = 2;
+}
