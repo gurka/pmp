@@ -1,0 +1,36 @@
+\hypertarget{namespaceMandelbrot}{}\section{Mandelbrot Namespace Reference}
+\label{namespaceMandelbrot}\index{Mandelbrot@{Mandelbrot}}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+std\+::vector$<$ std\+::uint8\+\_\+t $>$ \hyperlink{namespaceMandelbrot_a232cfba00967f21fe3681d195471ef5e}{compute} (std\+::complex$<$ double $>$ min\+\_\+c, std\+::complex$<$ double $>$ max\+\_\+c, int image\+\_\+width, int image\+\_\+height, int max\+\_\+iter)
+\begin{DoxyCompactList}\small\item\em Computes (renders) the \hyperlink{namespaceMandelbrot}{Mandelbrot} set. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Function Documentation}
+\mbox{\Hypertarget{namespaceMandelbrot_a232cfba00967f21fe3681d195471ef5e}\label{namespaceMandelbrot_a232cfba00967f21fe3681d195471ef5e}} 
+\index{Mandelbrot@{Mandelbrot}!compute@{compute}}
+\index{compute@{compute}!Mandelbrot@{Mandelbrot}}
+\subsubsection{\texorpdfstring{compute()}{compute()}}
+{\footnotesize\ttfamily std\+::vector$<$ std\+::uint8\+\_\+t $>$ Mandelbrot\+::compute (\begin{DoxyParamCaption}\item[{std\+::complex$<$ double $>$}]{min\+\_\+c,  }\item[{std\+::complex$<$ double $>$}]{max\+\_\+c,  }\item[{int}]{image\+\_\+width,  }\item[{int}]{image\+\_\+height,  }\item[{int}]{max\+\_\+iter }\end{DoxyParamCaption})}
+
+
+
+Computes (renders) the \hyperlink{namespaceMandelbrot}{Mandelbrot} set. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em min\+\_\+c} & Minimum complex value \\
+\hline
+\mbox{\tt in}  & {\em max\+\_\+c} & Maximum complex value \\
+\hline
+\mbox{\tt in}  & {\em image\+\_\+width} & Width of output image \\
+\hline
+\mbox{\tt in}  & {\em image\+\_\+height} & Height of output image \\
+\hline
+\mbox{\tt in}  & {\em max\+\_\+iter} & Maximum number of iterations per sample/point\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Image pixels (8bpp) The number of pixels is image\+\_\+width $\ast$ image\+\_\+height 
+\end{DoxyReturn}

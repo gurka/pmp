@@ -1,0 +1,135 @@
+\hypertarget{classTcpBackend_1_1ConnectionAsio}{}\section{Tcp\+Backend\+:\+:Connection\+Asio Class Reference}
+\label{classTcpBackend_1_1ConnectionAsio}\index{Tcp\+Backend\+::\+Connection\+Asio@{Tcp\+Backend\+::\+Connection\+Asio}}
+
+
+{\ttfamily \#include $<$tcp\+\_\+connection\+\_\+asio.\+h$>$}
+
+
+
+Inheritance diagram for Tcp\+Backend\+:\+:Connection\+Asio\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=226pt]{classTcpBackend_1_1ConnectionAsio__inherit__graph}
+\end{center}
+\end{figure}
+
+
+Collaboration diagram for Tcp\+Backend\+:\+:Connection\+Asio\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=226pt]{classTcpBackend_1_1ConnectionAsio__coll__graph}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{classTcpBackend_1_1ConnectionAsio_a736274fefc6ca4d83e03085fe2acbb7f}{Connection\+Asio} (asio\+::ip\+::tcp\+::socket socket)
+\item 
+void \hyperlink{classTcpBackend_1_1ConnectionAsio_aee6f9ded99c8382d3daaf2aa3d8890ee}{set\+\_\+callbacks} (const \hyperlink{namespaceTcpBackend_a2ce9b1a1f46bfa6c4b1ad38c8aa262a6}{On\+Disconnected} \&on\+\_\+disconnected, const \hyperlink{namespaceTcpBackend_a7d2c9f63e8017af705255d4ed08264a7}{On\+Read} \&on\+\_\+read, const \hyperlink{namespaceTcpBackend_a670c71abc926680e1ea574a5f3a99135}{On\+Write} \&on\+\_\+write, const \hyperlink{namespaceTcpBackend_a17e8f044749312a6692cd0135565cbc4}{On\+Error} \&on\+\_\+error) override
+\begin{DoxyCompactList}\small\item\em Set callbacks. \end{DoxyCompactList}\item 
+void \hyperlink{classTcpBackend_1_1ConnectionAsio_a97faa75722fa9034ba03cf32512a6f22}{read} () override
+\begin{DoxyCompactList}\small\item\em Starts read procedure (async) \end{DoxyCompactList}\item 
+void \hyperlink{classTcpBackend_1_1ConnectionAsio_acca26b2c5f640224e1642e808138a580}{write} (const std\+::uint8\+\_\+t $\ast$buffer, int len) override
+\begin{DoxyCompactList}\small\item\em Starts write procedure (async) \end{DoxyCompactList}\item 
+void \hyperlink{classTcpBackend_1_1ConnectionAsio_a4601c22735a27b1a835bfa73d9842848}{close} () override
+\begin{DoxyCompactList}\small\item\em Closes the connection. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classTcpBackend_1_1ConnectionAsio_a736274fefc6ca4d83e03085fe2acbb7f}\label{classTcpBackend_1_1ConnectionAsio_a736274fefc6ca4d83e03085fe2acbb7f}} 
+\index{Tcp\+Backend\+::\+Connection\+Asio@{Tcp\+Backend\+::\+Connection\+Asio}!Connection\+Asio@{Connection\+Asio}}
+\index{Connection\+Asio@{Connection\+Asio}!Tcp\+Backend\+::\+Connection\+Asio@{Tcp\+Backend\+::\+Connection\+Asio}}
+\subsubsection{\texorpdfstring{Connection\+Asio()}{ConnectionAsio()}}
+{\footnotesize\ttfamily Tcp\+Backend\+::\+Connection\+Asio\+::\+Connection\+Asio (\begin{DoxyParamCaption}\item[{asio\+::ip\+::tcp\+::socket}]{socket }\end{DoxyParamCaption})}
+
+
+
+\subsection{Member Function Documentation}
+\mbox{\Hypertarget{classTcpBackend_1_1ConnectionAsio_a4601c22735a27b1a835bfa73d9842848}\label{classTcpBackend_1_1ConnectionAsio_a4601c22735a27b1a835bfa73d9842848}} 
+\index{Tcp\+Backend\+::\+Connection\+Asio@{Tcp\+Backend\+::\+Connection\+Asio}!close@{close}}
+\index{close@{close}!Tcp\+Backend\+::\+Connection\+Asio@{Tcp\+Backend\+::\+Connection\+Asio}}
+\subsubsection{\texorpdfstring{close()}{close()}}
+{\footnotesize\ttfamily void Tcp\+Backend\+::\+Connection\+Asio\+::close (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Closes the connection. 
+
+Any ongoing async tasks will be aborted and the On\+Disconnected callback will be called either in this context or in a later context.
+
+The \hyperlink{classTcpBackend_1_1Connection}{Connection} instance may only be deleted when the On\+Disconnected callback has been called. 
+
+Implements \hyperlink{classTcpBackend_1_1Connection_aa3cbc715deb54c286149457c7819f514}{Tcp\+Backend\+::\+Connection}.
+
+\mbox{\Hypertarget{classTcpBackend_1_1ConnectionAsio_a97faa75722fa9034ba03cf32512a6f22}\label{classTcpBackend_1_1ConnectionAsio_a97faa75722fa9034ba03cf32512a6f22}} 
+\index{Tcp\+Backend\+::\+Connection\+Asio@{Tcp\+Backend\+::\+Connection\+Asio}!read@{read}}
+\index{read@{read}!Tcp\+Backend\+::\+Connection\+Asio@{Tcp\+Backend\+::\+Connection\+Asio}}
+\subsubsection{\texorpdfstring{read()}{read()}}
+{\footnotesize\ttfamily void Tcp\+Backend\+::\+Connection\+Asio\+::read (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Starts read procedure (async) 
+
+The On\+Read callback will be called when data has been read. 
+
+Implements \hyperlink{classTcpBackend_1_1Connection_a53c7544a1dc738fbf69d8081742f319c}{Tcp\+Backend\+::\+Connection}.
+
+\mbox{\Hypertarget{classTcpBackend_1_1ConnectionAsio_aee6f9ded99c8382d3daaf2aa3d8890ee}\label{classTcpBackend_1_1ConnectionAsio_aee6f9ded99c8382d3daaf2aa3d8890ee}} 
+\index{Tcp\+Backend\+::\+Connection\+Asio@{Tcp\+Backend\+::\+Connection\+Asio}!set\+\_\+callbacks@{set\+\_\+callbacks}}
+\index{set\+\_\+callbacks@{set\+\_\+callbacks}!Tcp\+Backend\+::\+Connection\+Asio@{Tcp\+Backend\+::\+Connection\+Asio}}
+\subsubsection{\texorpdfstring{set\+\_\+callbacks()}{set\_callbacks()}}
+{\footnotesize\ttfamily void Tcp\+Backend\+::\+Connection\+Asio\+::set\+\_\+callbacks (\begin{DoxyParamCaption}\item[{const \hyperlink{namespaceTcpBackend_a2ce9b1a1f46bfa6c4b1ad38c8aa262a6}{On\+Disconnected} \&}]{on\+\_\+disconnected,  }\item[{const \hyperlink{namespaceTcpBackend_a7d2c9f63e8017af705255d4ed08264a7}{On\+Read} \&}]{on\+\_\+read,  }\item[{const \hyperlink{namespaceTcpBackend_a670c71abc926680e1ea574a5f3a99135}{On\+Write} \&}]{on\+\_\+write,  }\item[{const \hyperlink{namespaceTcpBackend_a17e8f044749312a6692cd0135565cbc4}{On\+Error} \&}]{on\+\_\+error }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Set callbacks. 
+
+These callbacks must be set before any read or write procedures are started.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em on\+\_\+disconnected} & On\+Disconnected callback, see  \\
+\hline
+\mbox{\tt in}  & {\em on\+\_\+read} & On\+Read callback, see  \\
+\hline
+\mbox{\tt in}  & {\em on\+\_\+write} & On\+Write callback, see  \\
+\hline
+\mbox{\tt in}  & {\em on\+\_\+error} & On\+Error callback, see  \\
+\hline
+\end{DoxyParams}
+
+
+Implements \hyperlink{classTcpBackend_1_1Connection_a653318aa6306df78e53af47ae9d05e04}{Tcp\+Backend\+::\+Connection}.
+
+\mbox{\Hypertarget{classTcpBackend_1_1ConnectionAsio_acca26b2c5f640224e1642e808138a580}\label{classTcpBackend_1_1ConnectionAsio_acca26b2c5f640224e1642e808138a580}} 
+\index{Tcp\+Backend\+::\+Connection\+Asio@{Tcp\+Backend\+::\+Connection\+Asio}!write@{write}}
+\index{write@{write}!Tcp\+Backend\+::\+Connection\+Asio@{Tcp\+Backend\+::\+Connection\+Asio}}
+\subsubsection{\texorpdfstring{write()}{write()}}
+{\footnotesize\ttfamily void Tcp\+Backend\+::\+Connection\+Asio\+::write (\begin{DoxyParamCaption}\item[{const std\+::uint8\+\_\+t $\ast$}]{buffer,  }\item[{int}]{len }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Starts write procedure (async) 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em buffer} & The data to send \\
+\hline
+\mbox{\tt in}  & {\em len} & Length of data \\
+\hline
+\end{DoxyParams}
+
+
+Implements \hyperlink{classTcpBackend_1_1Connection_ab63e884129259b72a1d4614237048c46}{Tcp\+Backend\+::\+Connection}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+src/backend\+\_\+asio/\hyperlink{tcp__connection__asio_8h}{tcp\+\_\+connection\+\_\+asio.\+h}\item 
+src/backend\+\_\+asio/\hyperlink{tcp__connection__asio_8cc}{tcp\+\_\+connection\+\_\+asio.\+cc}\end{DoxyCompactItemize}

@@ -1,0 +1,60 @@
+\hypertarget{pmp__client_8cc}{}\section{src/pmp\+\_\+client.cc File Reference}
+\label{pmp__client_8cc}\index{src/pmp\+\_\+client.\+cc@{src/pmp\+\_\+client.\+cc}}
+{\ttfamily \#include $<$cstdio$>$}\newline
+{\ttfamily \#include $<$cmath$>$}\newline
+{\ttfamily \#include $<$chrono$>$}\newline
+{\ttfamily \#include $<$complex$>$}\newline
+{\ttfamily \#include $<$deque$>$}\newline
+{\ttfamily \#include $<$string$>$}\newline
+{\ttfamily \#include $<$memory$>$}\newline
+{\ttfamily \#include $<$vector$>$}\newline
+{\ttfamily \#include $<$unordered\+\_\+map$>$}\newline
+{\ttfamily \#include \char`\"{}tcp\+\_\+backend.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}protocol.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}pgm.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}logger.\+h\char`\"{}}\newline
+Include dependency graph for pmp\+\_\+client.\+cc\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{pmp__client_8cc__incl}
+\end{center}
+\end{figure}
+\subsection*{Data Structures}
+\begin{DoxyCompactItemize}
+\item 
+struct {\bfseries Arguments}
+\item 
+struct \hyperlink{structSession}{Session}
+\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+int \hyperlink{pmp__client_8cc_a0ddf1224851353fc92bfbff6f499fa97}{main} (int argc, char $\ast$argv\mbox{[}$\,$\mbox{]})
+\begin{DoxyCompactList}\small\item\em Main. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Function Documentation}
+\mbox{\Hypertarget{pmp__client_8cc_a0ddf1224851353fc92bfbff6f499fa97}\label{pmp__client_8cc_a0ddf1224851353fc92bfbff6f499fa97}} 
+\index{pmp\+\_\+client.\+cc@{pmp\+\_\+client.\+cc}!main@{main}}
+\index{main@{main}!pmp\+\_\+client.\+cc@{pmp\+\_\+client.\+cc}}
+\subsubsection{\texorpdfstring{main()}{main()}}
+{\footnotesize\ttfamily int main (\begin{DoxyParamCaption}\item[{int}]{argc,  }\item[{char $\ast$}]{argv\mbox{[}$\,$\mbox{]} }\end{DoxyParamCaption})}
+
+
+
+Main. 
+
+Parses arguments. Creates Requests. Creates and starts Clients. Prints timing information.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em argc} & argc \\
+\hline
+\mbox{\tt in}  & {\em argv} & argv\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+exit code 
+\end{DoxyReturn}

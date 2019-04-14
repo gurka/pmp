@@ -1,0 +1,40 @@
+\hypertarget{protocol_8h}{}\section{src/protocol.h File Reference}
+\label{protocol_8h}\index{src/protocol.\+h@{src/protocol.\+h}}
+{\ttfamily \#include $<$cstdint$>$}\newline
+{\ttfamily \#include $<$complex$>$}\newline
+{\ttfamily \#include $<$vector$>$}\newline
+Include dependency graph for protocol.\+h\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=260pt]{protocol_8h__incl}
+\end{center}
+\end{figure}
+This graph shows which files directly or indirectly include this file\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{protocol_8h__dep__incl}
+\end{center}
+\end{figure}
+\subsection*{Data Structures}
+\begin{DoxyCompactItemize}
+\item 
+struct \hyperlink{structProtocol_1_1Request}{Protocol\+::\+Request}
+\item 
+struct \hyperlink{structProtocol_1_1Response}{Protocol\+::\+Response}
+\end{DoxyCompactItemize}
+\subsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+ \hyperlink{namespaceProtocol}{Protocol}
+\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+{\footnotesize template$<$typename T $>$ }\\std\+::vector$<$ std\+::uint8\+\_\+t $>$ \hyperlink{namespaceProtocol_aed66655af8e41eb84311b69e0f1cbbad}{Protocol\+::serialize} (const T \&message)
+\item 
+{\footnotesize template$<$typename T $>$ }\\bool \hyperlink{namespaceProtocol_affe27ed8631c1368f3076ccd6499fb2f}{Protocol\+::deserialize} (const std\+::vector$<$ std\+::uint8\+\_\+t $>$ \&data, T $\ast$message)
+\end{DoxyCompactItemize}
