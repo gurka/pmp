@@ -2,8 +2,8 @@
 CXX      = g++
 CXXFLAGS = -std=c++14 -MMD -O2 -mtune=native \
            -Wall -Wextra \
-           -pedantic -fno-strict-aliasing
-LDFLAGS  = -lpthread
+           -pedantic -fno-strict-aliasing -pthread
+LDFLAGS  = -pthread
 
 .PHONY: clean
 
