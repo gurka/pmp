@@ -42,40 +42,45 @@ Tested on Linux 4.9.0 with gcc 6.3.0 and on Windows 10 with Visual Studio 2017.
 
   $ git submodule update --init --recursive
 
-2. Build using make or CMake:
+2. Build:
 
-  With make:
+  2.1 Build with make:
 
-  $ make
+    Build default target (asio) with make:
 
-  With CMake:
+    $ make
 
-  $ mkdir build
-  $ cd build
-  $ cmake ../src
-  $ make
+    Enter output directory and run programs, example:
 
-  This will build the default target (asio backend). For CMake only the asio target is available.
+    $ cd bin/asio
+    $ ./pmp_server 2222 &
+    $ ./pmp_client -1.0 -1.0 0.0 0.0 1024 1000 1000 1 localhost:2222
 
-3. Enter build output directory and run the programs:
+    Debug build is available with DEBUG=1 flag, e.g.:
 
-  For make build:
+    $ make DEBUG=1
 
-  $ cd bin/asio
+    Other targets, e.g. epoll, are also available (but currently not working):
 
-  For cmake build:
+    $ make epoll
 
-  $ cd bin
+  2.2 Build with CMake:
 
-  Example test run:
+    Create build directory and enter it:
 
-  $ ./pmp_server 2222 &
-  $ ./pmp_client -1.0 -1.0 0.0 0.0 1024 1000 1000 1 localhost:2222
+    $ mkdir build && cd build
+
+    Build default target (asio):
+
+    $ cmake ../src
+    $ make
+
+    Enter output directory and run programs, example:
+
+    $ cd bin
+    $ ./pmp_server 2222 &
+    $ ./pmp_client -1.0 -1.0 0.0 0.0 1024 1000 1000 1 localhost:2222
 ```
-
-Debug builds are available with with `DEBUG=1` flag to make, e.g. `make DEBUG=1`.
-
-You can build with epoll network backend with target epoll: `make epoll`.
 
 ### Documentation
 
