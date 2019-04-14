@@ -14,10 +14,11 @@ SOURCE_EPOLL  = $(wildcard src/backend_epoll/*.cc)
 SOURCE_ASIO   = $(wildcard src/backend_asio/*.cc)
 
 # Targets
-all: asio
+ifeq ($(DEBUG), 1)
+	CXXFLAGS += -O0 -g
+endif
 
-debug: CXXFLAGS += -O0 -g
-debug: all
+all: asio
 
 asio: CXXFLAGS += -isystem external/asio/asio/include
 asio: bin/asio/pmp_server bin/asio/pmp_client
