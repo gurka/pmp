@@ -27,7 +27,7 @@ Requires C++14-capable compiler and make or CMake.
 Tested on Linux 4.9.0 with gcc 6.3.0 and on Windows 10 with Visual Studio 2017.
 
 ```
-1. Clone the repository with --recursive so that the asio submodule is cloned as well and enter it:
+1. Clone the repository with --recursive so that the asio submodule is cloned as well, and enter the repo:
 
   $ git clone --recursive https://github.com/gurka/pmp.git
   $ cd pmp
@@ -38,18 +38,18 @@ Tested on Linux 4.9.0 with gcc 6.3.0 and on Windows 10 with Visual Studio 2017.
 
 2. Build using make or CMake:
 
-  make:
+  With make:
 
   $ make
 
-  CMake:
+  With CMake:
 
   $ mkdir build
   $ cd build
   $ cmake ../src
   $ make
 
-  This will build the default target (asio backend).
+  This will build the default target (asio backend). For CMake only the asio target is available.
 
 3. Enter build output directory and run the programs:
 
@@ -79,7 +79,7 @@ Doxygen documentation is available [here](https://gurka.github.io/pmp/doxygen/ht
 
 There are a few TODOs in the code, most of them related to error handling. It should be possible for the client to continue even if connection is lost to one or more servers as long as there is at least one server still available.
 
-Fully implement epoll and Winsock backend?
+Fully implement epoll and Winsock backend? Not really needed now since asio is both header only and cross-platform...
 
 ### Author
 Simon Sandström
