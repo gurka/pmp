@@ -14,6 +14,8 @@ var searchData=
   ['tcp_5fserver_5fepoll_2ecc',['tcp_server_epoll.cc',['../tcp__server__epoll_8cc.html',1,'']]],
   ['tcp_5fserver_5fepoll_2eh',['tcp_server_epoll.h',['../tcp__server__epoll_8h.html',1,'']]],
   ['tcpbackend',['TcpBackend',['../namespaceTcpBackend.html',1,'']]],
+  ['tcpconnection',['TcpConnection',['../classTcpConnection.html',1,'']]],
   ['tcpconnectionepoll',['TcpConnectionEpoll',['../classTcpConnectionEpoll.html',1,'TcpConnectionEpoll'],['../classTcpConnectionEpoll.html#a8a0d4fe2dc75d4e6f29f0221aeb16516',1,'TcpConnectionEpoll::TcpConnectionEpoll()']]],
+  ['tcpserver',['TcpServer',['../classTcpServer.html',1,'']]],
   ['tcpserverepoll',['TcpServerEpoll',['../classTcpServerEpoll.html',1,'TcpServerEpoll'],['../classTcpServerEpoll.html#aaf7ecde753d57703ac9fbf21e489ea22',1,'TcpServerEpoll::TcpServerEpoll()']]]
 ];
