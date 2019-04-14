@@ -13,6 +13,7 @@
 #include "pgm.h"
 #include "logger.h"
 
+// Program arguments, parsed and set in main()
 static struct Arguments
 {
   std::complex<double> min_c;
@@ -23,9 +24,13 @@ static struct Arguments
   int divisions;
 } arguments;
 
+// Queue of Requests, based on arguments and created in main()
 static std::deque<Protocol::Request> request_queue;
+
+// The final image's pixels (8bpp)
 static std::vector<std::uint8_t> image_pixels;
 
+// Represents a session/connection to a server
 struct Session
 {
   std::unique_ptr<TcpBackend::Connection> connection;
@@ -33,8 +38,21 @@ struct Session
   Protocol::Request current_request;
   std::vector<std::uint8_t> current_pixels;
 };
+
+// All Sessions, mapped with an unique id
 static std::unordered_map<int, Session> sessions;
 
+/**
+ * @brief Send the next request in the queue
+ *
+ * Take and remove the next Request in the queue and
+ * send it using the given session_id.
+ *
+ * Assumes that the queue is not empty and that a Session
+ * with the given session_id exist.
+ *
+ * @param[in]  session_id  The session to use for next request
+ */
 static void send_request(int session_id)
 {
   auto& session = sessions[session_id];
@@ -65,6 +83,18 @@ static void send_request(int session_id)
   session.connection->read();
 }
 
+/**
+ * @brief Callback called when a session disconnects
+ *
+ * Disconnect is expected only when the Request queue is empty
+ * and there is no ongoing request for the given Session.
+ *
+ * If any of the above is not true the program is aborted,
+ * Otherwise the Session is deleted. If this was the last Session
+ * to disconnect then we'll write the final image.
+ *
+ * @param[in]  session_id  Id of the session that disconnected
+ */
 static void on_disconnected(int session_id)
 {
   LOG_INFO("Session %d disconnected", session_id);
@@ -85,6 +115,8 @@ static void on_disconnected(int session_id)
   // If this was the last session to be closed then we can write the image and we're done!
   if (sessions.empty())
   {
+    // TODO: Do this in main() instead when network backend returns
+    //       Verify if OK to write image by checking if Request queue is empty and no more Sessions
     static const auto filename = std::string("image.pgm");
     LOG_INFO("No more requests and no more sessions, writing image to \"%s\"", filename.c_str());
     PGM::write_pgm(filename, arguments.image_width, arguments.image_height, image_pixels.data());
@@ -94,6 +126,21 @@ static void on_disconnected(int session_id)
   }
 }
 
+/**
+ * @brief Callback called when a session has read a message
+ *
+ * The only message that is read is Response, so if we cannot deserialize
+ * as a Response then abort.
+ *
+ * Otherwise add the pixels that we receive. If this is not the last message
+ * then we continue to read messages. If this is the last message we continue
+ * to send next Request in the queue. If the queue is empty we are done
+ * and can close the session.
+ *
+ * @param[in]  session_id  Id of the session that has read a message
+ * @param[in]  buffer      Message data
+ * @param[in]  len         Length of message data
+ */
 static void on_read(int session_id, const std::uint8_t* buffer, int len)
 {
   auto& session = sessions[session_id];
@@ -157,11 +204,31 @@ static void on_read(int session_id, const std::uint8_t* buffer, int len)
   sessions[session_id].connection->close();
 }
 
+/**
+ * @brief Callback called when a session has written a message
+ *
+ * Not used besides for debugging.
+ *
+ * @param[in]  session_id  Id of the session that has written a message
+ */
 static void on_write(int session_id)
 {
   LOG_DEBUG("%s: session_id=%d", __func__, session_id);
 }
 
+/**
+ * @brief Callback called when an error occurs in the Session connection
+ *
+ * Errors are currently not handled and the program is aborted on any
+ * kind of error.
+ *
+ * TODO: If this occurrs we could simply delete the Session, put its
+ *       Request back in the queue (if any) and let some other Session
+ *       handle it. If there are no more Session we have to abort though.
+ *
+ * @param[in]  session_id  Id of the session for which an error occurred
+ * @param[in]  message     Error message
+ */
 static void on_error_connection(int session_id, const std::string& message)
 {
   LOG_ERROR("%s: session_id=%d message=%s", __func__, session_id, message.c_str());
@@ -170,6 +237,14 @@ static void on_error_connection(int session_id, const std::string& message)
   exit(EXIT_FAILURE);
 }
 
+/**
+ * @brief Callback called when an error occurs in the Client
+ *
+ * Errors are currently not handled and the program is aborted on any
+ * kind of error.
+ *
+ * @param[in]  message     Error message
+ */
 static void on_error_client(const std::string& message)
 {
   LOG_ERROR("%s: message=%s", __func__, message.c_str());
@@ -178,6 +253,15 @@ static void on_error_client(const std::string& message)
   exit(EXIT_FAILURE);
 }
 
+/**
+ * @brief Callback called when a Client successfully connected
+ *
+ * Creates and initializes a Session object with the given Connection.
+ *
+ * @param[in]  connection  The Connection, wrapped in std::unique_ptr
+ * @param[in]  address     The client address
+ * @param[in]  port        The client port
+ */
 static void on_connected(std::unique_ptr<TcpBackend::Connection>&& connection,
                          const std::string& address,
                          const std::string& port)
@@ -210,6 +294,19 @@ static void on_connected(std::unique_ptr<TcpBackend::Connection>&& connection,
   send_request(session_id);
 }
 
+/**
+ * @brief Main
+ *
+ * Parses arguments.
+ * Creates Requests.
+ * Creates and starts Clients.
+ * Prints timing information.
+ *
+ * @param[in]  argc  argc
+ * @param[in]  argv  argv
+ *
+ * @return exit code
+ */
 int main(int argc, char* argv[])
 {
   // Check and parse arguments
