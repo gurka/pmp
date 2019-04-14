@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.1)
 
 project(pmp)
 
@@ -6,7 +6,13 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -mtune=native -Wall -Wextra -pedantic -fno-strict-aliasing -pthread")
+set(CMAKE_CXX_STANDARD 14)
+
+if (MSVC)
+  add_compile_options("/W3")
+else()
+  add_compile_options("-mtune=native" "-Wall" "-Wextra" "-pedantic" "-fno-strict-aliasing" "-pthread")
+endif()
 
 add_executable(pmp_server
   "pmp_server.cc"
@@ -48,6 +54,8 @@ add_library(backend_asio
 )
 target_include_directories(backend_asio PUBLIC
   "."
+)
+target_include_directories(backend_asio SYSTEM PUBLIC
   "../external/asio/asio/include"
 )
 
