@@ -1,4 +1,5 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="node1" href="$classTcpBackend_1_1Connection.html" title="Represents a connection. " alt="" coords="5,5,175,32"/>
-<area shape="rect" id="node2" href="$classTcpBackend_1_1ConnectionAsio.html" title="TcpBackend::ConnectionAsio" alt="" coords="223,5,417,32"/>
+<area shape="rect" id="node1" href="$classTcpBackend_1_1Connection.html" title="Represents a connection. " alt="" coords="5,31,175,57"/>
+<area shape="rect" id="node2" href="$classTcpBackend_1_1ConnectionAsio.html" title="TcpBackend::ConnectionAsio" alt="" coords="225,5,419,32"/>
+<area shape="rect" id="node3" href="$classTcpBackend_1_1ConnectionEpoll.html" title="TcpBackend::ConnectionEpoll" alt="" coords="223,56,421,83"/>
 </map>

@@ -79,6 +79,7 @@ Inheritance diagram for TcpBackend::Connection:</div>
 <div class="center"><img src="classTcpBackend_1_1Connection__inherit__graph.png" border="0" usemap="#TcpBackend_1_1Connection_inherit__map" alt="Inheritance graph"/></div>
 <map name="TcpBackend_1_1Connection_inherit__map" id="TcpBackend_1_1Connection_inherit__map">
 <area shape="rect" id="node2" href="classTcpBackend_1_1ConnectionAsio.html" title="{TcpBackend::ConnectionAsio\n||+ ConnectionAsio()\l+ set_callbacks()\l+ read()\l+ write()\l+ close()\l}" alt="" coords="5,189,200,325"/>
+<area shape="rect" id="node3" href="classTcpBackend_1_1ConnectionEpoll.html" title="{TcpBackend::ConnectionEpoll\n||+ ConnectionEpoll()\l+ set_callbacks()\l+ read()\l+ write()\l+ close()\l}" alt="" coords="225,189,423,325"/>
 </map>
 </div>
 <div class="dynheader">
@@ -163,7 +164,7 @@ Public Member Functions</h2></td></tr>
 <p>Any ongoing async tasks will be aborted and the OnDisconnected callback will be called either in this context or in a later context.</p>
 <p>The <a class="el" href="classTcpBackend_1_1Connection.html" title="Represents a connection. ">Connection</a> instance may only be deleted when the OnDisconnected callback has been called. </p>
 
-<p>Implemented in <a class="el" href="classTcpBackend_1_1ConnectionAsio.html#a4601c22735a27b1a835bfa73d9842848">TcpBackend::ConnectionAsio</a>.</p>
+<p>Implemented in <a class="el" href="classTcpBackend_1_1ConnectionAsio.html#a4601c22735a27b1a835bfa73d9842848">TcpBackend::ConnectionAsio</a>, and <a class="el" href="classTcpBackend_1_1ConnectionEpoll.html#a7f593d09fb784cdd193062cd0189f0d1">TcpBackend::ConnectionEpoll</a>.</p>
 
 </div>
 </div>
@@ -193,7 +194,7 @@ Public Member Functions</h2></td></tr>
 <p>Starts read procedure (async) </p>
 <p>The OnRead callback will be called when data has been read. </p>
 
-<p>Implemented in <a class="el" href="classTcpBackend_1_1ConnectionAsio.html#a97faa75722fa9034ba03cf32512a6f22">TcpBackend::ConnectionAsio</a>.</p>
+<p>Implemented in <a class="el" href="classTcpBackend_1_1ConnectionAsio.html#a97faa75722fa9034ba03cf32512a6f22">TcpBackend::ConnectionAsio</a>, and <a class="el" href="classTcpBackend_1_1ConnectionEpoll.html#aafa577b0dde7af29d5d6dc7257bc91d5">TcpBackend::ConnectionEpoll</a>.</p>
 
 </div>
 </div>
@@ -255,7 +256,7 @@ Public Member Functions</h2></td></tr>
   </dd>
 </dl>
 
-<p>Implemented in <a class="el" href="classTcpBackend_1_1ConnectionAsio.html#aee6f9ded99c8382d3daaf2aa3d8890ee">TcpBackend::ConnectionAsio</a>.</p>
+<p>Implemented in <a class="el" href="classTcpBackend_1_1ConnectionAsio.html#aee6f9ded99c8382d3daaf2aa3d8890ee">TcpBackend::ConnectionAsio</a>, and <a class="el" href="classTcpBackend_1_1ConnectionEpoll.html#a18ea919efe6f7c45c3d509db073f862f">TcpBackend::ConnectionEpoll</a>.</p>
 
 </div>
 </div>
@@ -302,7 +303,7 @@ Public Member Functions</h2></td></tr>
   </dd>
 </dl>
 
-<p>Implemented in <a class="el" href="classTcpBackend_1_1ConnectionAsio.html#acca26b2c5f640224e1642e808138a580">TcpBackend::ConnectionAsio</a>.</p>
+<p>Implemented in <a class="el" href="classTcpBackend_1_1ConnectionAsio.html#acca26b2c5f640224e1642e808138a580">TcpBackend::ConnectionAsio</a>, and <a class="el" href="classTcpBackend_1_1ConnectionEpoll.html#aba3ee4e801dbb057919718c0ffd392f8">TcpBackend::ConnectionEpoll</a>.</p>
 
 </div>
 </div>

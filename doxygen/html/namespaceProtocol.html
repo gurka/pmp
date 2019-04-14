@@ -89,9 +89,11 @@ Functions</h2></td></tr>
 <tr class="separator:a89a2ebe25b5f049e779e4c451712a4d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aed66655af8e41eb84311b69e0f1cbbad"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
 <tr class="memitem:aed66655af8e41eb84311b69e0f1cbbad"><td class="memTemplItemLeft" align="right" valign="top">std::vector&lt; std::uint8_t &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceProtocol.html#aed66655af8e41eb84311b69e0f1cbbad">serialize</a> (const T &amp;message)</td></tr>
+<tr class="memdesc:aed66655af8e41eb84311b69e0f1cbbad"><td class="mdescLeft">&#160;</td><td class="mdescRight">Serialize a message.  <a href="#aed66655af8e41eb84311b69e0f1cbbad">More...</a><br /></td></tr>
 <tr class="separator:aed66655af8e41eb84311b69e0f1cbbad"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:affe27ed8631c1368f3076ccd6499fb2f"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
 <tr class="memitem:affe27ed8631c1368f3076ccd6499fb2f"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceProtocol.html#affe27ed8631c1368f3076ccd6499fb2f">deserialize</a> (const std::vector&lt; std::uint8_t &gt; &amp;data, T *message)</td></tr>
+<tr class="memdesc:affe27ed8631c1368f3076ccd6499fb2f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Deserialize a message.  <a href="#affe27ed8631c1368f3076ccd6499fb2f">More...</a><br /></td></tr>
 <tr class="separator:affe27ed8631c1368f3076ccd6499fb2f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
@@ -122,6 +124,16 @@ template&lt;typename T &gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Deserialize a message. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">data</td><td>Array of bytes to deserialize </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">message</td><td>Pointer to message where to deserialize into</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if deserialized successfully, otherwise false </dd></dl>
 
 </div>
 </div>
@@ -202,6 +214,15 @@ template&lt;typename T &gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Serialize a message. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">message</td><td>The message to serialize</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>An array of bytes. </dd></dl>
 
 </div>
 </div>

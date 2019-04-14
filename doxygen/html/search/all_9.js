@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['read',['read',['../classTcpBackend_1_1ConnectionAsio.html#a97faa75722fa9034ba03cf32512a6f22',1,'TcpBackend::ConnectionAsio::read()'],['../classTcpBackend_1_1Connection.html#a53c7544a1dc738fbf69d8081742f319c',1,'TcpBackend::Connection::read()']]],
+  ['read',['read',['../classTcpBackend_1_1ConnectionAsio.html#a97faa75722fa9034ba03cf32512a6f22',1,'TcpBackend::ConnectionAsio::read()'],['../classTcpBackend_1_1ConnectionEpoll.html#aafa577b0dde7af29d5d6dc7257bc91d5',1,'TcpBackend::ConnectionEpoll::read()'],['../classTcpBackend_1_1Connection.html#a53c7544a1dc738fbf69d8081742f319c',1,'TcpBackend::Connection::read()']]],
   ['request',['Request',['../structProtocol_1_1Request.html',1,'Protocol']]],
   ['request_5fongoing',['request_ongoing',['../structSession.html#a7136254f114d887ab73172b395c040d5',1,'Session']]],
   ['response',['Response',['../structProtocol_1_1Response.html',1,'Protocol']]],

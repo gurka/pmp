@@ -1,3 +1,4 @@
 <map id="TcpBackend::Client" name="TcpBackend::Client">
 <area shape="rect" id="node2" href="$classTcpBackend_1_1ClientAsio.html" title="{TcpBackend::ClientAsio\n||+ ClientAsio()\l}" alt="" coords="5,131,168,208"/>
+<area shape="rect" id="node3" href="$classTcpBackend_1_1ClientEpoll.html" title="{TcpBackend::ClientEpoll\n||}" alt="" coords="193,131,359,208"/>
 </map>
