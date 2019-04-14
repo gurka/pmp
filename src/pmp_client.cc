@@ -76,8 +76,8 @@ static void send_request(int session_id)
            session.current_request.max_iter);
 
   // Send the request
-  session.connection->write(reinterpret_cast<const std::uint8_t*>(&session.current_request),
-                            sizeof(session.current_request));
+  const auto buffer = Protocol::serialize(session.current_request);
+  session.connection->write(buffer.data(), buffer.size());
 
   // And start reading response messages
   session.connection->read();
