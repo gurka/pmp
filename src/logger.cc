@@ -25,7 +25,11 @@ void Logger::log(const char* filename, int line, Level level, ...)
   time_t now = time(0);
   struct tm tstruct{};
   char time_str[32];
+#if defined(__unix__)
   localtime_r(&now, &tstruct);
+#else
+  localtime_s(&tstruct, &now);
+#endif
   strftime(time_str, sizeof(time_str), "%Y-%m-%d %X", &tstruct);
 
   // Extract variadic function arguments
