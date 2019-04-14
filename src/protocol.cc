@@ -7,7 +7,7 @@
 
 namespace
 {
-  // Helpers for adding or getting raw values from a buffer
+  // Helpers for adding values into a byte buffer
 
   template<typename T>
   void add(std::vector<std::uint8_t>* buffer, const T& val);
@@ -35,7 +35,7 @@ namespace
   template<>
   void add(std::vector<std::uint8_t>* buffer, const bool& val)
   {
-    // bool is simply a std::uint8_t where 0 = false, 1 = true
+    // bool is encoded as a std::uint8_t where 0 = false, 1 = true
     add<std::uint8_t>(buffer, val ? 1u : 0u);
   }
 
@@ -82,6 +82,8 @@ namespace
     add<std::uint16_t>(buffer, val.size());
     buffer->insert(buffer->end(), val.begin(), val.end());
   }
+
+  // Helpers for getting values from a byte buffer
 
   template<typename T>
   bool get(const std::vector<std::uint8_t>& data, int* pos, T* val);
