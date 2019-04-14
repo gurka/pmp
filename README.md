@@ -1,4 +1,10 @@
 # pmp
+### Demo
+
+Video demo available [here](https://youtu.be/hyFlIVzvFOA).
+
+Shows build procedure on both Windows and Linux as well as server on Windows with client on Linux and vice versa.
+
 ### Features
 
 Cross-platform (customizable network backend):
