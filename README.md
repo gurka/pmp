@@ -15,30 +15,51 @@ Cross-platform (customizable network backend):
   **Status**: not started
 
 Server capable of handling multiple connections in parallel, but only one Mandelbrot computation at a time.
+
 Custom binary network protocol, see [src/protocol.h](src/protocol.h).
+
+Both client and server have been tested on both Linux and Windows.
 
 ### Build and run
 
-Only tested on Linux 4.9.0 and 5.0.1 with gcc 6.3.0. Requires C++14-capable compiler.
+Requires C++14-capable compiler and make or CMake.
+
+Tested on Linux 4.9.0 with gcc 6.3.0 and on Windows 10 with Visual Studio 2017.
 
 ```
-1. Clone the repository with --recursive so that the asio submodule is cloned as well:
+1. Clone the repository with --recursive so that the asio submodule is cloned as well and enter it:
 
   $ git clone --recursive https://github.com/gurka/pmp.git
+  $ cd pmp
 
   If you already cloned the repo without --recursive you can enter the repo and run:
 
   $ git submodule update --init --recursive
 
-2. Enter repo and run make
+2. Build using make or CMake:
 
-  $ cd pmp && make
+  make:
+
+  $ make
+
+  CMake:
+
+  $ mkdir build
+  $ cd build
+  $ cmake ../src
+  $ make
 
   This will build the default target (asio backend).
 
-3. Enter asio build output directory and run the programs:
+3. Enter build output directory and run the programs:
+
+  For make build:
 
   $ cd bin/asio
+
+  For cmake build:
+
+  $ cd bin
 
   Example test run:
 
@@ -47,6 +68,7 @@ Only tested on Linux 4.9.0 and 5.0.1 with gcc 6.3.0. Requires C++14-capable comp
 ```
 
 Debug builds are available with with `DEBUG=1` flag to make, e.g. `make DEBUG=1`.
+
 You can build with epoll network backend with target epoll: `make epoll`.
 
 ### Documentation
@@ -58,8 +80,6 @@ Doxygen documentation is available [here](https://gurka.github.io/pmp/doxygen/ht
 There are a few TODOs in the code, most of them related to error handling. It should be possible for the client to continue even if connection is lost to one or more servers as long as there is at least one server still available.
 
 Fully implement epoll and Winsock backend?
-
-Test on Windows.
 
 ### Author
 Simon Sandström
