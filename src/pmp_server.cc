@@ -13,10 +13,23 @@
 #include "mandelbrot.h"
 #include "logger.h"
 
+// The server
 static std::unique_ptr<TcpBackend::Server> server;
+
+// Map connection_id -> Connection
 static std::unordered_map<int, std::unique_ptr<TcpBackend::Connection>> connections;
+
+// Map connection_id -> Pixels
 static std::unordered_map<int, std::vector<std::uint8_t>> responses;
 
+/**
+ * @brief Send (or continue to send) Response to given Connection
+ *
+ * Takes as many pixels as possible (Response message has a max size)
+ * from responses and sends it to the Connection in a Response message.
+ *
+ * @param[in]  connection_id  Id of the connection to which send Response
+ */
 static void send_response(int connection_id)
 {
   if (responses.count(connection_id) == 0)
@@ -59,6 +72,14 @@ static void send_response(int connection_id)
   }
 }
 
+/**
+ * @brief Callback called when a connection disconnects
+ *
+ * Disconnect is expected only when the response has been sent,
+ * if this is not the case we abort the program.
+ *
+ * @param[in]  connection_id  Id of the connection that disconnected
+ */
 static void on_disconnected(int connection_id)
 {
   LOG_INFO("Connection %d disconnected", connection_id);
@@ -77,6 +98,19 @@ static void on_disconnected(int connection_id)
   }
 }
 
+/**
+ * @brief Callback called when a connection has read a message
+ *
+ * The only message that is read is Request, so if we cannot deserialize
+ * as a Request then abort.
+ *
+ * The Mandelbrot pixels are computated and added to the responses variable
+ * and we then start sending a response to the connection.
+ *
+ * @param[in]  connection_id  Id of the connection that has read a message
+ * @param[in]  buffer         Message data
+ * @param[in]  len            Length of message data
+ */
 static void on_read(int connection_id, const std::uint8_t* buffer, int len)
 {
   Protocol::Request request;
@@ -118,6 +152,15 @@ static void on_read(int connection_id, const std::uint8_t* buffer, int len)
   send_response(connection_id);
 }
 
+/**
+ * @brief Callback called when a session has written a message
+ *
+ * If the connection has more pixels to send we do that, otherwise
+ * we re-start the read procedure to see if the client has more
+ * requests.
+ *
+ * @param[in]  connection_id  Id of the connection that has written a message
+ */
 static void on_write(int connection_id)
 {
   LOG_DEBUG("%s: connection_id=%d", __func__, connection_id);
@@ -136,6 +179,15 @@ static void on_write(int connection_id)
   }
 }
 
+/**
+ * @brief Callback called when an error occurs in a connection
+ *
+ * Errors are currently not handled and the program is aborted on any
+ * kind of error.
+ *
+ * @param[in]  connection_id  Id of the connection for which an error occurred
+ * @param[in]  message        Error message
+ */
 static void on_error(int connection_id, const std::string& message)
 {
   LOG_ERROR("%s: connection_id=%d message=%s", __func__, connection_id, message.c_str());
@@ -144,6 +196,14 @@ static void on_error(int connection_id, const std::string& message)
   exit(EXIT_FAILURE);
 }
 
+/**
+ * @brief Callback called when the Server has accepted a connection
+ *
+ * The connection is initialized and the read procedure is started.
+ * We also tell the server to continue accepting new connections.
+ *
+ * @param[in]  connection  The connection, wrapped in std::unique_ptr
+ */
 static void on_accept(std::unique_ptr<TcpBackend::Connection>&& connection)
 {
   // Unique id per connection
@@ -169,6 +229,18 @@ static void on_accept(std::unique_ptr<TcpBackend::Connection>&& connection)
   server->accept();
 }
 
+/**
+ * @brief Main
+ *
+ * Parses arguments.
+ * Creates and starts Server.
+ * Runs forever.
+ *
+ * @param[in]  argc  argc
+ * @param[in]  argv  argv
+ *
+ * @return exit code
+ */
 int main(int argc, char* argv[])
 {
   if (argc != 2)
