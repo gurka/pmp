@@ -16,16 +16,25 @@ void Logger::log(const char* filename, int line, Level level, ...)
 #endif
 
   // Remove directories in filename ("src/logger.cc" => "logger.cc")
-  if (strrchr(filename, '/'))
+#if defined(__unix__)
+constexpr auto DIR_SEP = '/';
+#else
+constexpr auto DIR_SEP = '\\';
+#endif
+  if (strrchr(filename, DIR_SEP))
   {
-    filename = strrchr(filename, '/') + 1;
+    filename = strrchr(filename, DIR_SEP) + 1;
   }
 
   // Get current date and time
   time_t now = time(0);
   struct tm tstruct{};
   char time_str[32];
+#if defined(__unix__)
   localtime_r(&now, &tstruct);
+#else
+  localtime_s(&tstruct, &now);
+#endif
   strftime(time_str, sizeof(time_str), "%Y-%m-%d %X", &tstruct);
 
   // Extract variadic function arguments
