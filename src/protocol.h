@@ -10,36 +10,28 @@ namespace Protocol
 
 /**
  * @brief Represents a Request message
- *
- * @var  min_c        The minimum complex value
- * @var  max_c        The maximum complex value
- * @var  image_width  Image width in pixels
- * @var  image_height Image height in pixels
- * @var  max_iter     Maximum number of iterations per
- *                    sample (image pixel)
  */
 struct Request
 {
-  std::complex<double> min_c;
-  std::complex<double> max_c;
-  std::uint32_t image_width;
-  std::uint32_t image_height;
-  std::uint32_t max_iter;
+  std::complex<double> min_c;  /**< The minimum complex value */
+  std::complex<double> max_c;  /**< The maximum complex value */
+  std::uint32_t image_width;   /**< Image width in pixels */
+  std::uint32_t image_height;  /**< Image height in pixels */
+  std::uint32_t max_iter;      /**< Maximum number of iterations
+                                    per sample (image pixel) */
 };
 
 /**
  * @brief Represents a Response message
- *
- * @var  pixels        Array of pixels (8bpp)
- *                     Note that this array may not be larger than
- *                     2^15, @see protocol.cc
- * @var  last_message  True if this is the last response message
- *                     corresponding to a request
  */
 struct Response
 {
-  std::vector<std::uint8_t> pixels;
-  bool last_message;
+  std::vector<std::uint8_t> pixels;  /**< Array of pixels (8bpp)
+                                          Note that this array may not
+                                          be larger than 2^15.
+                                          @see protocol.cc */
+  bool last_message;                 /**< True if this is the last
+                                          response message */
 };
 
 /**
