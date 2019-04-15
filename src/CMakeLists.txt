@@ -12,6 +12,15 @@ if (MSVC)
   add_compile_options("/W3")
 else()
   add_compile_options("-mtune=native" "-Wall" "-Wextra" "-pedantic" "-fno-strict-aliasing" "-pthread")
+
+  # in CMake 3.14 we have add_link_options()...
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pthread")
+endif()
+
+option(USE_ASAN "Compile with ASAN (AddressSanitizer)" OFF)
+if (USE_ASAN)
+  add_compile_options("-fsanitize=address" "-fsanitize=leak" "-fsanitize=undefined")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address -fsanitize=leak -fsanitize=undefined")
 endif()
 
 add_executable(pmp_server
