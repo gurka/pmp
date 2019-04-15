@@ -90,9 +90,9 @@ Doxygen documentation is available [here](https://gurka.github.io/pmp/doxygen/ht
 
 ### TODO
 
-There are a few TODOs in the code, most of them related to error handling. It should be possible for the client to continue even if connection is lost to one or more servers as long as there is at least one server still available.
-
 Fully implement epoll and Winsock backend? Not really needed now since asio is both header only and cross-platform...
+
+Still a few TODOs left in the code...
 
 ### Author
 Simon Sandström

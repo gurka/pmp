@@ -99,18 +99,24 @@ static void on_disconnected(int session_id)
 {
   LOG_INFO("Session %d disconnected", session_id);
 
+  // We have the return the sessions's request if it
+  // has one ongoing
   const auto& session = sessions[session_id];
-  if (session.request_ongoing || !request_queue.empty())
+  if (session.request_ongoing)
   {
-    // Something is wrong, the connection shouldn't disconnect now...
-    LOG_ERROR("Unexpected disconnect!");
-
-    // TODO: Try to recover?
-    exit(EXIT_FAILURE);
+    LOG_INFO("Returning session's request to queue");
+    request_queue.push_back(session.current_request);
   }
 
   // Delete the session
   sessions.erase(session_id);
+
+  // Check for unrecoverable scenario
+  if (sessions.empty() && !request_queue.empty())
+  {
+    LOG_ERROR("All session disconnected but there are still requests in the queue, aborting");
+    exit(EXIT_FAILURE);
+  }
 }
 
 /**
@@ -187,6 +193,11 @@ static void on_read(int session_id, const std::uint8_t* buffer, int len)
     return;
   }
 
+  // TODO: Don't close the connection when the queue is empty
+  //       There can be one or more sessions that have requests
+  //       ongoing that fails/disconnects, and then we might
+  //       need another session to re-send that request or we
+  //       have to abort/fail.
   // Close connection
   sessions[session_id].connection->close();
 }
