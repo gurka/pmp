@@ -31,6 +31,8 @@ struct Request
  * @brief Represents a Response message
  *
  * @var  pixels        Array of pixels (8bpp)
+ *                     Note that this array may not be larger than
+ *                     2^15, @see protocol.cc
  * @var  last_message  True if this is the last response message
  *                     corresponding to a request
  */

@@ -65,7 +65,7 @@ using OnConnected = std::function<void(std::unique_ptr<Connection>&& connection,
  * The Connection instance may only be deleted when this callback
  * has been called.
  *
- * See @Connection for more information.
+ * @see Connection for more information.
  */
 using OnDisconnected = std::function<void(void)>;
 
@@ -132,10 +132,10 @@ class Connection
    * These callbacks must be set before any read or write
    * procedures are started.
    *
-   * @param[in]  on_disconnected  OnDisconnected callback, see @OnDisconnected
-   * @param[in]  on_read          OnRead callback, see @OnRead
-   * @param[in]  on_write         OnWrite callback, see @OnWrite
-   * @param[in]  on_error         OnError callback, see @OnError
+   * @param[in]  on_disconnected  OnDisconnected callback, @see OnDisconnected
+   * @param[in]  on_read          OnRead callback, @see OnRead
+   * @param[in]  on_write         OnWrite callback, @see OnWrite
+   * @param[in]  on_error         OnError callback, @see OnError
    */
   virtual void set_callbacks(const OnDisconnected& on_disconnected,
                              const OnRead& on_read,
@@ -173,7 +173,7 @@ class Connection
 /**
  * @brief Used to start a connection
  *
- * See @create_client
+ * @see create_client
  */
 class Client
 {
@@ -184,7 +184,7 @@ class Client
 /**
  * @brief Used to accept new connections
  *
- * See @create_server
+ * @see create_server
  */
 class Server
 {
