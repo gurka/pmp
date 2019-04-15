@@ -344,8 +344,10 @@ int main(int argc, char* argv[])
   for (auto i = 9; i < argc; i++)
   {
     const auto arg = std::string(argv[i]);
-    const auto sep = arg.find(":");
-    if (sep == std::string::npos || sep == arg.size() - 1)
+    const auto sep = arg.find_last_of(":");
+    if (sep == 0u ||                 // no address part
+        sep == std::string::npos ||  // no colon
+        sep == arg.size() - 1)       // no port part
     {
       fprintf(stderr,
               "usage: %s min_c_re min_c_im max_c_re max_c_im max_n x y divisions list-of-servers\n",
