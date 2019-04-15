@@ -20,6 +20,8 @@ Cross-platform (customizable network backend):
   
   **Status**: not started
 
+IPv4 and IPv6 support.
+
 Server capable of handling multiple connections in parallel, but only one Mandelbrot computation at a time.
 
 Custom binary network protocol, see [src/protocol.h](src/protocol.h).

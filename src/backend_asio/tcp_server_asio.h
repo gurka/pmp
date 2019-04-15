@@ -20,8 +20,14 @@ class ServerAsio : public Server
   void accept() override;
 
  private:
-  asio::ip::tcp::acceptor m_acceptor;
-  asio::ip::tcp::socket m_socket;
+  asio::ip::tcp::acceptor m_acceptor_v4;
+  asio::ip::tcp::socket   m_socket_v4;
+  bool                    m_ongoing_v4;
+
+  asio::ip::tcp::acceptor m_acceptor_v6;
+  asio::ip::tcp::socket   m_socket_v6;
+  bool                    m_ongoing_v6;
+
   OnAccept m_on_accept;
 };
 
