@@ -111,19 +111,6 @@ static void on_disconnected(int session_id)
 
   // Delete the session
   sessions.erase(session_id);
-
-  // If this was the last session to be closed then we can write the image and we're done!
-  if (sessions.empty())
-  {
-    // TODO: Do this in main() instead when network backend returns
-    //       Verify if OK to write image by checking if Request queue is empty and no more Sessions
-    static const auto filename = std::string("image.pgm");
-    LOG_INFO("No more requests and no more sessions, writing image to \"%s\"", filename.c_str());
-    PGM::write_pgm(filename, arguments.image_width, arguments.image_height, image_pixels.data());
-
-    // The program will exit automatically since no async tasks _should_ be active after
-    // this call, so the network backend should stop and return to main() where we'll exit
-  }
 }
 
 /**
@@ -409,15 +396,28 @@ int main(int argc, char* argv[])
     return EXIT_FAILURE;
   }
 
+  // Save timestamp at start
   const auto time_begin = std::chrono::steady_clock::now();
 
   // Start network backend, it will run until there are no more
   // active async tasks
-  // TODO: catch ^C and quit gracefully
   TcpBackend::run();
 
-  const auto time_end = std::chrono::steady_clock::now();
+  // Check if network backend returned prematurely
+  if (!sessions.empty() || !request_queue.empty())
+  {
+    LOG_ERROR("%s: network backend return but there are still sessions or requests in the queue",
+              __func__);
+    exit(EXIT_FAILURE);
+  }
 
+  // Write image file
+  static const auto filename = std::string("image.pgm");
+  LOG_INFO("Writing image to \"%s\"", filename.c_str());
+  PGM::write_pgm(filename, arguments.image_width, arguments.image_height, image_pixels.data());
+
+  // Save timestamp at end and print execution time
+  const auto time_end = std::chrono::steady_clock::now();
   LOG_INFO("%s executed for a total time of %dms (%ds)",
            argv[0],
            std::chrono::duration_cast<std::chrono::milliseconds>(time_end - time_begin).count(),
