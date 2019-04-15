@@ -86,8 +86,6 @@ Inheritance diagram for TcpBackend::Connection:</div>
 Collaboration diagram for TcpBackend::Connection:</div>
 <div class="dyncontent">
 <div class="center"><img src="classTcpBackend_1_1Connection__coll__graph.png" border="0" usemap="#TcpBackend_1_1Connection_coll__map" alt="Collaboration graph"/></div>
-<map name="TcpBackend_1_1Connection_coll__map" id="TcpBackend_1_1Connection_coll__map">
-</map>
 </div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
@@ -248,13 +246,32 @@ Public Member Functions</h2></td></tr>
 <p>These callbacks must be set before any read or write procedures are started.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">on_disconnected</td><td>OnDisconnected callback, see  </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">on_read</td><td>OnRead callback, see  </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">on_write</td><td>OnWrite callback, see  </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">on_error</td><td>OnError callback, see  </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">on_disconnected</td><td>OnDisconnected callback, </td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="namespaceTcpBackend.html#a2ce9b1a1f46bfa6c4b1ad38c8aa262a6" title="OnDisconnected callback. ">OnDisconnected</a> </dd></dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">on_read</td><td>OnRead callback, </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="namespaceTcpBackend.html#a7d2c9f63e8017af705255d4ed08264a7" title="OnRead callback. ">OnRead</a> </dd></dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">on_write</td><td>OnWrite callback, </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="namespaceTcpBackend.html#a670c71abc926680e1ea574a5f3a99135" title="OnWrite callback. ">OnWrite</a> </dd></dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">on_error</td><td>OnError callback, </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="namespaceTcpBackend.html#a17e8f044749312a6692cd0135565cbc4" title="OnError callback. ">OnError</a> </dd></dl>
 
 <p>Implemented in <a class="el" href="classTcpBackend_1_1ConnectionAsio.html#aee6f9ded99c8382d3daaf2aa3d8890ee">TcpBackend::ConnectionAsio</a>, and <a class="el" href="classTcpBackend_1_1ConnectionEpoll.html#a18ea919efe6f7c45c3d509db073f862f">TcpBackend::ConnectionEpoll</a>.</p>
 

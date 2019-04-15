@@ -1,6 +1,6 @@
 <map id="src/pmp_server.cc" name="src/pmp_server.cc">
-<area shape="rect" id="node10" href="$tcp__backend_8h.html" title="tcp_backend.h" alt="" coords="669,80,775,107"/>
-<area shape="rect" id="node14" href="$protocol_8h.html" title="protocol.h" alt="" coords="393,80,472,107"/>
-<area shape="rect" id="node16" href="$mandelbrot_8h.html" title="mandelbrot.h" alt="" coords="496,80,593,107"/>
-<area shape="rect" id="node17" href="$logger_8h.html" title="logger.h" alt="" coords="1027,80,1095,107"/>
+<area shape="rect" id="node9" href="$tcp__backend_8h.html" title="tcp_backend.h" alt="" coords="669,80,775,107"/>
+<area shape="rect" id="node13" href="$protocol_8h.html" title="protocol.h" alt="" coords="515,80,593,107"/>
+<area shape="rect" id="node15" href="$mandelbrot_8h.html" title="mandelbrot.h" alt="" coords="393,80,491,107"/>
+<area shape="rect" id="node16" href="$logger_8h.html" title="logger.h" alt="" coords="935,80,1003,107"/>
 </map>
