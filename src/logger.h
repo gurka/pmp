@@ -15,7 +15,7 @@ namespace Logger
    *
    * @param[in]  filename  Name of the file that prints this message
    * @param[in]  line      Linenumber that prints this message
-   * @param[in]  Level     Log level: INFO, DEBUG or ERROR
+   * @param[in]  level     Log level: INFO, DEBUG or ERROR
    * @param[in]  ...       vararg, printf style
    */
   void log(const char* filename, int line, Level level, ...);
