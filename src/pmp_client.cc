@@ -144,9 +144,7 @@ static void on_read(int session_id, const std::uint8_t* buffer, int len)
   if (!Protocol::deserialize(std::vector<std::uint8_t>(buffer, buffer + len), &response))
   {
     LOG_ERROR("%s: could not deserialize Response message", __func__);
-
-    // TODO: Try to recover?
-    exit(EXIT_FAILURE);
+    session.connection->close();
   }
 
   LOG_DEBUG("%s: response: num_pixels=%d last_message=%s",
@@ -217,12 +215,8 @@ static void on_write(int session_id)
 /**
  * @brief Callback called when an error occurs in the Session connection
  *
- * Errors are currently not handled and the program is aborted on any
- * kind of error.
- *
- * TODO: If this occurrs we could simply delete the Session, put its
- *       Request back in the queue (if any) and let some other Session
- *       handle it. If there are no more Session we have to abort though.
+ * Close the connection if any error occurs and let the on_disconnected
+ * callback decide if we can continue or if we have to abort.
  *
  * @param[in]  session_id  Id of the session for which an error occurred
  * @param[in]  message     Error message
@@ -230,25 +224,24 @@ static void on_write(int session_id)
 static void on_error_connection(int session_id, const std::string& message)
 {
   LOG_ERROR("%s: session_id=%d message=%s", __func__, session_id, message.c_str());
-
-  // TODO: Try to recover?
-  exit(EXIT_FAILURE);
+  auto& session = sessions.at(session_id);
+  session.connection->close();
 }
 
 /**
  * @brief Callback called when an error occurs in the Client
  *
- * Errors are currently not handled and the program is aborted on any
- * kind of error.
+ * Just print the error and continue. It doesn't matter that one or more
+ * connections fail as long as at least one connection is successful.
+ * If _all_ connections fail the network backend will return and we'll notice
+ * in main() that we still have unhandled requests in the queue, and inform
+ * the user that the program failed.
  *
  * @param[in]  message     Error message
  */
 static void on_error_client(const std::string& message)
 {
   LOG_ERROR("%s: message=%s", __func__, message.c_str());
-
-  // TODO: Try to recover?
-  exit(EXIT_FAILURE);
 }
 
 /**
