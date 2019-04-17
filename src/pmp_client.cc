@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <cmath>
+#include <algorithm>
 #include <chrono>
 #include <complex>
 #include <deque>
@@ -191,13 +192,21 @@ static void on_read(int session_id, const std::uint8_t* buffer, int len)
     return;
   }
 
-  // TODO: Don't close the connection when the queue is empty
-  //       There can be one or more sessions that have requests
-  //       ongoing that fails/disconnects, and then we might
-  //       need another session to re-send that request or we
-  //       have to abort/fail.
-  // Close connection
-  sessions[session_id].connection->close();
+  // Check if this is the last session to finish (no Session has request_ongoing = true)
+  if (std::none_of(sessions.begin(),
+                   sessions.end(),
+                   [](const auto& pair){ return pair.second.request_ongoing; }))
+  {
+    // Now we can close all sessions and end the program
+    // NOTE: close() will call the on_disconnected callback which in turn will
+    //       delete the Session and remove it from the sessions vector, so we
+    //       cannot iterate over the sessions vector and call close()
+    while (!sessions.empty())
+    {
+      auto& session = sessions.begin()->second;
+      session.connection->close();
+    }
+  }
 }
 
 /**

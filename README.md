@@ -92,8 +92,6 @@ Doxygen documentation is available [here](https://gurka.github.io/pmp/doxygen/ht
 
 Fully implement epoll and Winsock backend? Not really needed now since asio is both header only and cross-platform...
 
-Still a few TODOs left in the code...
-
 ### Author
 Simon Sandström
 
