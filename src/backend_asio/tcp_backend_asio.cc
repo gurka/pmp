@@ -10,7 +10,7 @@ namespace TcpBackend
 
 static asio::io_service io_service;
 
-bool connect(const std::string& address,
+void connect(const std::string& address,
              const std::string& port,
              const OnConnected& on_connected,
              const OnError& on_error)
@@ -35,7 +35,6 @@ bool connect(const std::string& address,
                                        port);
                         }
                       });
-  return true;
 }
 
 std::unique_ptr<Server> create_server(std::uint16_t port, const OnAccept& on_accept)

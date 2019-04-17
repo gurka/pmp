@@ -86,11 +86,8 @@ using OnAccept    = std::function<void(std::unique_ptr<Connection>&& connection)
  * @param[in]  port          Port to connect on
  * @param[in]  on_connected  Callback that is called when the client has connected
  * @param[in]  on_error      Callback that is called on error
- *
- * @return true if successful, otherwise false
- *         Neither callback will be called if false is returned
  */
-bool connect(const std::string& address,
+void connect(const std::string& address,
              const std::string& port,
              const OnConnected& on_connected,
              const OnError& on_error);
