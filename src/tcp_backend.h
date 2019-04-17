@@ -117,6 +117,14 @@ std::unique_ptr<Server> create_server(std::uint16_t port,
 void run();
 
 /**
+ * @brief Stop the TCP backend
+ *
+ * If the TCP backend is running it will be stopped and all ongoing async tasks aborted,
+ * finally the call to run() will return.
+ */
+void stop();
+
+/**
  * @brief Represents a connection
  *
  * Created by Client or Server when a connection has been established

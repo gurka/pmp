@@ -29,4 +29,9 @@ void run()
   io_service.run();
 }
 
+void stop()
+{
+  io_service.stop();
+}
+
 }

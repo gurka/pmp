@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
+#include <csignal>
 #include <chrono>
 #include <complex>
 #include <string>
@@ -276,10 +277,22 @@ int main(int argc, char* argv[])
   }
   server->accept();
 
+  // Setup signal handler to catch SIGINT (^C) so that we
+  // can gracefully stop the server
+  signal(SIGINT, [](int)
+  {
+    LOG_INFO("Stopping TCP backend");
+    TcpBackend::stop();
+  });
+
   // Start network backend, it will run until there are no more
   // active async tasks
-  // TODO: catch ^C and quit gracefully
   TcpBackend::run();
+
+  // Explicitly delete static stuff here so that we can control
+  // the order
+  sessions.clear();
+  server.reset();
 
   return EXIT_SUCCESS;
 }
