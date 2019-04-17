@@ -12,7 +12,6 @@ namespace TcpBackend
 // Forward declarations
 
 class Connection;
-class Client;
 class Server;
 
 // Callback types
@@ -37,7 +36,7 @@ using OnWrite = std::function<void(void)>;
 /**
  * @brief OnError callback
  *
- * Called by Connection, Client or Server when an error occurs
+ * Called by Connection, Server or connect() when an error occurs
  *
  * @param[in]  message  The error message
  */
@@ -46,7 +45,7 @@ using OnError = std::function<void(const std::string& message)>;
 /**
  * @brief OnConnected callback
  *
- * Called by Client when it has connected
+ * Called by connect() when it has connected
  *
  * @param[in]  connection  The Connection that represents the connection
  * @param[in]  address     Address that the Connection is connected to
@@ -81,20 +80,20 @@ using OnAccept    = std::function<void(std::unique_ptr<Connection>&& connection)
 // Functions
 
 /**
- * @brief Creates a TCP client
+ * @brief Creates a TCP connection towards the given address and port
  *
  * @param[in]  address       Address to connect on
  * @param[in]  port          Port to connect on
  * @param[in]  on_connected  Callback that is called when the client has connected
  * @param[in]  on_error      Callback that is called on error
  *
- * @return Client wrapped in std::unique_ptr, or an empty std::unique_ptr on error
+ * @return true if successful, otherwise false
+ *         Neither callback will be called if false is returned
  */
-std::unique_ptr<Client> create_client(const std::string& address,
-                                      const std::string& port,
-                                      const OnConnected& on_connected,
-                                      const OnError& on_error);
-
+bool connect(const std::string& address,
+             const std::string& port,
+             const OnConnected& on_connected,
+             const OnError& on_error);
 
 /**
  * @brief Creates a TCP server
@@ -127,7 +126,7 @@ void stop();
 /**
  * @brief Represents a connection
  *
- * Created by Client or Server when a connection has been established
+ * Created by connect() or Server when a connection has been established
  */
 class Connection
 {
@@ -176,17 +175,6 @@ class Connection
    * callback has been called.
    */
   virtual void close() = 0;
-};
-
-/**
- * @brief Used to start a connection
- *
- * @see create_client
- */
-class Client
-{
- public:
-  virtual ~Client() = default;
 };
 
 /**

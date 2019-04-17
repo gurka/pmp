@@ -229,7 +229,7 @@ static void on_error_connection(int session_id, const std::string& message)
 }
 
 /**
- * @brief Callback called when an error occurs in the Client
+ * @brief Callback called when an error occurs in TcpBackend::connect
  *
  * Just print the error and continue. It doesn't matter that one or more
  * connections fail as long as at least one connection is successful.
@@ -245,7 +245,7 @@ static void on_error_client(const std::string& message)
 }
 
 /**
- * @brief Callback called when a Client successfully connected
+ * @brief Callback called when TcpBackend::connect successfully connected
  *
  * Creates and initializes a Session object with the given Connection.
  *
@@ -290,7 +290,7 @@ static void on_connected(std::unique_ptr<TcpBackend::Connection>&& connection,
  *
  * Parses arguments.
  * Creates Requests.
- * Creates and starts Clients.
+ * Starts connections.
  * Prints timing information.
  *
  * @param[in]  argc  argc
@@ -375,29 +375,13 @@ int main(int argc, char* argv[])
   // Pre-allocate image_pixels vector
   image_pixels.insert(image_pixels.begin(), arguments.image_width * arguments.image_height, 0u);
 
-  // Create one TCP client per server
-  std::vector<std::unique_ptr<TcpBackend::Client>> clients;
+  // Connect towards each server
   for (const auto& server : servers)
   {
     const auto address = std::get<0>(server);
     const auto port = std::get<1>(server);
-
     LOG_INFO("Creating TCP client connecting to %s:%s", address.c_str(), port.c_str());
-
-    // Create TCP client - if any error occurs just ignore it and continue with next
-    // TcpBackend::create_client prints message on error
-    auto tcp_client = TcpBackend::create_client(address, port, on_connected, on_error_client);
-    if (tcp_client)
-    {
-      clients.push_back(std::move(tcp_client));
-    }
-  }
-
-  // If no TCP clients could be created then we have to abort
-  if (clients.empty())
-  {
-    LOG_ERROR("%s: no TCP client could be created", __func__);
-    return EXIT_FAILURE;
+    TcpBackend::connect(address, port, on_connected, on_error_client);
   }
 
   // Save timestamp at start
